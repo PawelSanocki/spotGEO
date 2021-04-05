@@ -191,23 +191,26 @@ def validate_json(labels,variable_size):
 
 # This script can run from the command line: python my_anno.json true_labels.json
 if __name__ == '__main__':
-    if len(sys.argv)  not in [2, 3]:
-        print('Usage: \n\tValidation: python my_anno.json\n\tscoring: python my_anno.json true_labels.json')
-    else:
-        print('Validating... ', end='', flush=True)
-        with open(sys.argv[1], 'rt') as fp:
-            jsonfile = json.load(fp)
-            valid = validate_json(jsonfile,len(sys.argv)==3)
-            if len(sys.argv) == 3:
-                jsonfile2 = json.load(open(sys.argv[2], 'rt'))
-                valid = validate_json(jsonfile2,True)
-                if len(jsonfile)!=len(jsonfile2):
-                    raise ValueError('Error. The validation file and ground truth file must be the same length.')
+    precision, recall, F1, mse = compute_score('submission.json', 'train_anno.json')
+    print('precision, recall, F1, mse')
+    print(precision, recall, F1, mse)
+    # if len(sys.argv)  not in [2, 3]:
+    #     print('Usage: \n\tValidation: python my_anno.json\n\tscoring: python my_anno.json true_labels.json')
+    # else:
+    #     print('Validating... ', end='', flush=True)
+    #     with open(sys.argv[1], 'rt') as fp:
+    #         jsonfile = json.load(fp)
+    #         valid = validate_json(jsonfile,len(sys.argv)==3)
+    #         if len(sys.argv) == 3:
+    #             jsonfile2 = json.load(open(sys.argv[2], 'rt'))
+    #             valid = validate_json(jsonfile2,True)
+    #             if len(jsonfile)!=len(jsonfile2):
+    #                 raise ValueError('Error. The validation file and ground truth file must be the same length.')
 
-        if valid:
-            print('passed!')
+    #     if valid:
+    #         print('passed!')
 
-        if len(sys.argv) == 3:
-            print('Compute score... ', end='', flush=True)
-            score, mse = compute_score(sys.argv[1], sys.argv[2])
-            print('Score: {:0.6f}, (MSE: {:0.6f})'.format(score, mse))
+    #     if len(sys.argv) == 3:
+    #         print('Compute score... ', end='', flush=True)
+    #         score, mse = compute_score(sys.argv[1], sys.argv[2])
+    #         print('Score: {:0.6f}, (MSE: {:0.6f})'.format(score, mse))

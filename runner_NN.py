@@ -1,4 +1,4 @@
-from os import join,realpath,abspath
+from os.path import join,realpath,abspath
 import numpy as np
 from pathlib import Path
 import cv2
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 SIZE = 11
 
-model_time = 7114191
+model_time = 7622941
 model = tf.keras.models.load_model('model\models\model' + str(model_time))
 model.summary()
 
@@ -27,8 +27,21 @@ def get_window(img, x, y, i):
     y += SIZE//2
     to_pred = image[x-SIZE//2:x+SIZE//2+1,y-SIZE//2:y+SIZE//2+1].reshape((SIZE,SIZE,1))
     return to_pred, tup
+def print_images(original_imgs, imgs, columns = 5):
+    fig=plt.figure(figsize=(14, 8))
+    rows = 2
+    iter = 1
+    for img in original_imgs[:columns]:
+        fig.add_subplot(rows, columns, iter)
+        plt.imshow(img)
+        iter += 1
+    for img in imgs[:columns]:
+        fig.add_subplot(rows, columns, iter)
+        plt.imshow(img)
+        iter += 1
+    plt.show()
 
-path = join(Path(__file__).parent.absolute(),"test")
+path = join(Path(__file__).parent.absolute(),"train")
 # path = join(Path(__file__).parent.absolute(),"train")
 results = []
 
@@ -46,7 +59,6 @@ for seq in tqdm(range(len(next(os.walk(path))[1]))):
     for i in range(5):
         img = cv2.imread(join(path, str(seq+1), str(i+1)) + '.png', cv2.IMREAD_GRAYSCALE)
         img = filter_image(img)
-        new_img = np.zeros_like(img)
         for x, y in product(range(img.shape[0]),range(img.shape[1])):
             if img[x,y] > 0:
                 window, coord = get_window(img, x, y, i)
@@ -59,6 +71,7 @@ for seq in tqdm(range(len(next(os.walk(path))[1]))):
         p = model.predict(np.array(to_pred))
         for i, coord in enumerate(coords):
             imgs[coord] = p[i][0]
+    print_images(original_imgs, imgs, 3)
     d = sequence_into_trajectories(imgs, original_imgs, True)
     for i in range(5):
         results.append(label_frame(d, seq+1, i+1))
@@ -74,6 +87,6 @@ if path == join(Path(__file__).parent.absolute(),"test"):
     print('precision, recall, F1, mse')
     print(precision, recall, F1, mse)
 else:
-    precision, recall, F1, mse = validation.compute_score('submission.json', 'annotation.json')
+    precision, recall, F1, mse = validation.compute_score('submission.json', 'train_anno.json')
     print('precision, recall, F1, mse')
     print(precision, recall, F1, mse)

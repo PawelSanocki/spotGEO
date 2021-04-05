@@ -32,35 +32,65 @@ def get_image(anno):
     path = images_path + "\\" + str(seq) +  "\\" + str(frame) + ".png"
     image = cv2.imread(path, 0) # 0 for greyscale
     size = KERNEL_SIZE // 2
-    image = np.pad(image, size)
+    image = np.pad(image, size, mode = 'reflect')
     img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
     return img
 
-def get_false_image(anno):
-    seq = np.random.randint(1,1281)
-    frame = np.random.randint(1,6)
-    path = images_path + "\\" + str(seq) +  "\\" + str(frame) + ".png"
-    image = cv2.imread(path, 0) # 0 for greyscale
-    img = filter_image(image)
-    y, x = np.nonzero(img)
-    if len(x) > 0:
-        rand = np.random.randint(0,len(x))
-        x = x[rand]
-        y = y[rand]
-    else:
-        x = np.random.randint(0,image.shape[1])
-        y = np.random.randint(0,image.shape[0])
+# def get_false_image(anno):
+#     seq = np.random.randint(1,1281)
+#     frame = np.random.randint(1,6)
+#     path = images_path + "\\" + str(seq) +  "\\" + str(frame) + ".png"
+#     image = cv2.imread(path, 0) # 0 for greyscale
+#     img = filter_image(image)
+#     y, x = np.nonzero(img)
+#     if len(x) > 0:
+#         rand = np.random.randint(0,len(x))
+#         x = x[rand]
+#         y = y[rand]
+#     else:
+#         x = np.random.randint(0,image.shape[1])
+#         y = np.random.randint(0,image.shape[0])
+#     size = KERNEL_SIZE // 2
+#     image = np.pad(image, size, mode = 'reflect')
+#     img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
+#     return img
+
+# PATH_TRUE = "model\\dataset_nn\\1\\"
+# for i in tqdm(range(len(ds_true))):
+#     img = get_image(ds_true[i])
+#     cv2.imwrite(PATH_TRUE + str(i) + ".png", img)
+
+from filters import filter_image
+from itertools import product
+
+def create_false_sample(true, iter, path):
+    PATH_FALSE = "model\\dataset_nn\\0\\"
+    image = cv2.imread(path, 0)
+    filtered_img = filter_image(image)
     size = KERNEL_SIZE // 2
-    image = np.pad(image, size)
-    img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
-    return img
-
-PATH_TRUE = "model\\dataset_nn\\1\\"
-for i in tqdm(range(len(ds_true))):
-    img = get_image(ds_true[i])
-    cv2.imwrite(PATH_TRUE + str(i) + ".png",img)
+    image = np.pad(image, size, mode = 'reflect')
+    for y, x in product(range(filtered_img.shape[0]),range(filtered_img.shape[1])):
+        if (y,x) in true:
+            continue
+        if filtered_img[y, x] > 0:
+            iter += 1
+            if iter % 200 > 0:
+                continue
+            img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
+            cv2.imwrite(PATH_FALSE + str(iter) + ".png", img)
+            plt.imshow(img)
+            plt.show()
+    return iter
 
 PATH_FALSE = "model\\dataset_nn\\0\\"
-for i in tqdm(range(len(ds_true))):
-    img = get_false_image(ds_true[i])
-    cv2.imwrite(PATH_FALSE + str(i) + ".png",img)
+# for i in tqdm(range(len(ds_true))):
+#     img = get_false_image(ds_true[i])
+#     cv2.imwrite(PATH_FALSE + str(i) + ".png",img)
+path = "train"
+iter = 0
+for i in tqdm(range(len(next(os.walk(path))[1]))):
+    for j in range(5):
+        img_path = path + "\\" + str(i + 1) + "\\" + str(j + 1) + ".png"
+        true = ((int(y), int(x)) for y, x in ds_frames[5*i + j]['object_coords'])
+        iter = create_false_sample(true, iter, img_path)
+print(iter)

@@ -75,7 +75,7 @@ def generate_points(imgs):
     imgs - matrix of shape (5, 480, 640)
     '''
     points = []
-    for t in range(4): # might be range(4) or range(5), speedup or more points to test
+    for t in range(5): # might be range(4) or range(5), speedup or more points to test
         points_in_frame = []
         for x in range(imgs.shape[1]):
             for y in range(imgs.shape[2]):
@@ -91,15 +91,29 @@ def calculate_direction(points, imgs):
     Finds colinear points on one image
     Returns dictionary with all directions found
     '''
+    # directions = dict()
+    # for i in range(4):
+    #     for j in range(i+1, 5): # might be in range(i+1, 4) for speedup as we do not need to find just two points, range(i+1, 5) if we need better results
+    #         points_copy_1 = copy.deepcopy(points)
+    #         for p_1 in range(len(points_copy_1[i])):
+    #             p1 = points_copy_1[i][p_1]
+    #             points_copy_2 = copy.deepcopy(points)
+    #             for p_2 in range(len(points_copy_2[j])):
+    #                 p2 = points_copy_2[j][p_2]
+    #                 trajectory, score, direction = predict_points(p1, p2, imgs)
+    #                 if score < SCORE_THRESHOLD: continue
+    #                 direction = tuple(direction)
+    #                 if direction in directions.keys():
+    #                     directions[direction].append(copy.deepcopy(trajectory))
+    #                 else:
+    #                     directions[direction] = [copy.deepcopy(trajectory)]
+    #                 break
+    # return directions
     directions = dict()
     for i in range(4):
-        for j in range(i+1, 4): # might be in range(i+1, 4) for speedup as we do not need to find just two points, range(i+1, 5) if we need better results
-            points_copy_1 = copy.deepcopy(points)
-            for p_1 in range(len(points_copy_1[i])):
-                p1 = points_copy_1[i][p_1]
-                points_copy_2 = copy.deepcopy(points)
-                for p_2 in range(len(points_copy_2[j])):
-                    p2 = points_copy_2[j][p_2]
+        for j in range(i+1, 5): # might be in range(i+1, 4) for speedup as we do not need to find just two points, range(i+1, 5) if we need better results
+            for p1 in points[i]:
+                for p2 in points[j]:
                     trajectory, score, direction = predict_points(p1, p2, imgs)
                     if score < SCORE_THRESHOLD: continue
                     direction = tuple(direction)
@@ -107,12 +121,6 @@ def calculate_direction(points, imgs):
                         directions[direction].append(copy.deepcopy(trajectory))
                     else:
                         directions[direction] = [copy.deepcopy(trajectory)]
-                    # for point in trajectory[:-1]:
-                    #     try:
-                    #         #points[point[0]].remove(point)
-                    #         pass
-                    #     except:
-                    #         pass
                     break
     return directions
 

@@ -34,8 +34,8 @@ dataset = dataset.map(preprocess)
 
 ds_size //= BATCH_SIZE
 
-train_size = int(0.8 * ds_size)
-val_size = int(0.1 * ds_size)
+train_size = int(0.9 * ds_size)
+val_size = int(0.05 * ds_size)
 
 train_ds = dataset.take(train_size)
 test_ds = dataset.skip(train_size)
@@ -57,14 +57,14 @@ def get_augmenter():
 def get_model():
     model = tf.keras.Sequential()
     model.add(get_augmenter())
-    model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu'))
+    model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
     model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-    model.add(tf.keras.layers.Conv2D(32, (2, 2), activation='relu'))
+    model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu'))
     model.add(tf.keras.layers.MaxPooling2D((2, 2)))
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(64, activation='relu'))
     model.add(tf.keras.layers.Dropout(0.2))
-    model.add(tf.keras.layers.Dense(64, activation='relu'))
+    model.add(tf.keras.layers.Dense(32, activation='relu'))
     model.add(tf.keras.layers.Dropout(0.2))
     model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
     # model.compile(optimizer='Adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
