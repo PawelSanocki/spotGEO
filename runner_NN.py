@@ -1,4 +1,4 @@
-from os.path import join,realpath,abspath
+from os import join,realpath,abspath
 import numpy as np
 from pathlib import Path
 import cv2
