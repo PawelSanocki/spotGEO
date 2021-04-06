@@ -7,11 +7,11 @@ import timeit
 import copy
 from matplotlib import pyplot as plt
 
-SATELLITE = 0.5
-SCORE_THRESHOLD = 2.5
+SATELLITE = 0.6
+SCORE_THRESHOLD = 3
 MARGIN = 3
-DIRECTIONS_SIMILARITY = 5
-TRAJECTORY_SIMILARITY = 5
+DIRECTIONS_SIMILARITY = 10
+TRAJECTORY_SIMILARITY = 10
 
 def preprocess_images(imgs: np.ndarray) -> np.ndarray:
     '''
@@ -21,7 +21,6 @@ def preprocess_images(imgs: np.ndarray) -> np.ndarray:
     :returns: stacked images in the sequence, shape (5,480,640)
     '''
     for i in range(5):
-        # imgs[i][100:110,100:110] += 0.6 * np.ones_like(imgs[i][100:110,100:110])
         imgs[i] = remove_blobs(imgs[i])
     return imgs
 def remove_blobs(img):

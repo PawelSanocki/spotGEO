@@ -7,11 +7,10 @@ import sys
 import os.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from filters import filter_image
+from model import settings
 
-SEED = 24
-KERNEL_SIZE = 11
-N_CHANNELS = 1
-N_CLASSES = 2
+SEED = settings.SEED
+WINDOW_SIZE = settings.WINDOW_SIZE
 
 train_anno_path = "train_anno.json"
 images_path = "train"
@@ -31,7 +30,7 @@ def get_image(anno):
     y = anno[3]
     path = images_path + "\\" + str(seq) +  "\\" + str(frame) + ".png"
     image = cv2.imread(path, 0) # 0 for greyscale
-    size = KERNEL_SIZE // 2
+    size = WINDOW_SIZE // 2
     image = np.pad(image, size, mode = 'reflect')
     img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
     return img
@@ -50,7 +49,7 @@ def get_image(anno):
 #     else:
 #         x = np.random.randint(0,image.shape[1])
 #         y = np.random.randint(0,image.shape[0])
-#     size = KERNEL_SIZE // 2
+#     size = WINDOW_SIZE // 2
 #     image = np.pad(image, size, mode = 'reflect')
 #     img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
 #     return img
@@ -67,7 +66,7 @@ def create_false_sample(true, iter, path):
     PATH_FALSE = "model\\dataset_nn\\0\\"
     image = cv2.imread(path, 0)
     filtered_img = filter_image(image)
-    size = KERNEL_SIZE // 2
+    size = WINDOW_SIZE // 2
     image = np.pad(image, size, mode = 'reflect')
     for y, x in product(range(filtered_img.shape[0]),range(filtered_img.shape[1])):
         if (y,x) in true:

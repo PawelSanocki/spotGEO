@@ -1,7 +1,7 @@
 from os.path import join,realpath,abspath
+import cv2
 import numpy as np
 from pathlib import Path
-import cv2
 from filters import filter_image
 from trajectories2 import sequence_into_trajectories
 from dict_to_json import label_frame
@@ -13,19 +13,20 @@ import time
 import tensorflow as tf
 from itertools import product
 import matplotlib.pyplot as plt
+from model import settings
 
-SIZE = 11
+WINDOW_SIZE = settings.WINDOW_SIZE
 
 model_time = 7622941
 model = tf.keras.models.load_model('model\models\model' + str(model_time))
 model.summary()
 
 def get_window(img, x, y, i):
-    image = np.pad(img, SIZE//2)
+    image = np.pad(img, WINDOW_SIZE//2)
     tup = (i, x, y)
-    x += SIZE//2
-    y += SIZE//2
-    to_pred = image[x-SIZE//2:x+SIZE//2+1,y-SIZE//2:y+SIZE//2+1].reshape((SIZE,SIZE,1))
+    x += WINDOW_SIZE//2
+    y += WINDOW_SIZE//2
+    to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
     return to_pred, tup
 def print_images(original_imgs, imgs, columns = 5):
     fig=plt.figure(figsize=(14, 8))
@@ -71,7 +72,7 @@ for seq in tqdm(range(len(next(os.walk(path))[1]))):
         p = model.predict(np.array(to_pred))
         for i, coord in enumerate(coords):
             imgs[coord] = p[i][0]
-    print_images(original_imgs, imgs, 3)
+    # print_images(original_imgs, imgs, 2)
     d = sequence_into_trajectories(imgs, original_imgs, True)
     for i in range(5):
         results.append(label_frame(d, seq+1, i+1))

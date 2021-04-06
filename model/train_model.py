@@ -1,3 +1,4 @@
+from model.create_dataset import WINDOW_SIZE
 import numpy as np
 import tensorflow as tf
 import time
@@ -10,8 +11,9 @@ ds_size = len(os.listdir("model/dataset_nn/1"))
 ds_size += len(os.listdir("model/dataset_nn/0"))
 print(ds_size)
 
+from model import settings
 BATCH_SIZE = 32
-SIZE = (11,11)
+WINDOW_SIZE = settings.WINDOW_SIZE
 SEED = 321
 TRAIN_DIR = "model/dataset_nn"
 
@@ -20,7 +22,7 @@ dataset = tf.keras.preprocessing.image_dataset_from_directory(
     directory=TRAIN_DIR,
     labels="inferred",
     label_mode="binary",
-    image_size=SIZE,
+    image_size=(WINDOW_SIZE,WINDOW_SIZE),
     seed=SEED,
     color_mode="grayscale",
     batch_size=BATCH_SIZE
@@ -51,7 +53,7 @@ test_ds = test_ds.skip(val_size)
 
 def get_augmenter():
     augmenter = tf.keras.Sequential()
-    augmenter.add(tf.keras.layers.experimental.preprocessing.RandomFlip(input_shape = (11,11,1)))
+    augmenter.add(tf.keras.layers.experimental.preprocessing.RandomFlip(input_shape = (WINDOW_SIZE,WINDOW_SIZE,1)))
     return augmenter
 
 def get_model():
@@ -80,14 +82,8 @@ t = str(int(time.time()) % 10000000)
 model.save('model/models/model' + t)
 print("Saved: model" + t)
 
-# acc = model.evaluate(test_ds, verbose=0, return_dict=True)
-# print(acc)
-
-for i,j in test_ds.take(0):
-    print(j[0].numpy())
-    print(model.predict(i[0].numpy().reshape((1,11,11,1))))
-    plt.imshow(i[0].numpy().reshape((11,11)))
-    plt.show()
+acc = model.evaluate(test_ds, verbose=0, return_dict=True)
+print(acc)
     
 # model = tf.keras.models.load_model('models/model' + time)
 
