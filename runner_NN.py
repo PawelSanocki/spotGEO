@@ -17,7 +17,7 @@ from model import settings
 
 WINDOW_SIZE = settings.WINDOW_SIZE
 
-model_time = 7622941
+model_time = 618909165
 model = tf.keras.models.load_model('model\models\model' + str(model_time))
 model.summary()
 
@@ -46,8 +46,8 @@ path = join(Path(__file__).parent.absolute(),"train")
 # path = join(Path(__file__).parent.absolute(),"train")
 results = []
 
-# for seq in tqdm(range(1)):
-for seq in tqdm(range(len(next(os.walk(path))[1]))):
+for seq in tqdm(range(5)):
+# for seq in tqdm(range(len(next(os.walk(path))[1]))):
     imgs = []
     original_imgs = []
     for i in range(5):
@@ -73,7 +73,8 @@ for seq in tqdm(range(len(next(os.walk(path))[1]))):
         for i, coord in enumerate(coords):
             imgs[coord] = p[i][0]
     # print_images(original_imgs, imgs, 2)
-    d = sequence_into_trajectories(imgs, original_imgs, True)
+    # d = sequence_into_trajectories(imgs, original_imgs, True)
+    d = sequence_into_trajectories(imgs)
     for i in range(5):
         results.append(label_frame(d, seq+1, i+1))
 

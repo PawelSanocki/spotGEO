@@ -34,15 +34,23 @@ def filter_image(img):
     # # img = img * max_blur_img
     # img = max_blur_img
 ######################################################
-    max_blur_img = np.array(myFilters.max_blur_corners(img,7))
+    # max_blur_img = np.array(myFilters.max_blur_corners(img,7))
+    # max_blur_img = cv2.subtract(img,max_blur_img)
+    # _, max_blur_img = cv2.threshold(max_blur_img, 10, 255, cv2.THRESH_BINARY)
+    # # kernel = np.uint8(np.array([[1,1,1],[1,1,1],[1,1,1]]))
+    # # max_blur_img = cv2.dilate(max_blur_img, kernel, iterations=2)
+
+    # # img = img * max_blur_img
+    # img = max_blur_img
+########################################
+    max_blur_img = np.array(myFilters.max_blur(img,7,3))
     max_blur_img = cv2.subtract(img,max_blur_img)
-    _, max_blur_img = cv2.threshold(max_blur_img, 10, 255, cv2.THRESH_BINARY)
+    _, max_blur_img = cv2.threshold(max_blur_img, 5, 255, cv2.THRESH_BINARY)
     # kernel = np.uint8(np.array([[1,1,1],[1,1,1],[1,1,1]]))
     # max_blur_img = cv2.dilate(max_blur_img, kernel, iterations=2)
 
     # img = img * max_blur_img
     img = max_blur_img
-
 ######################################## STEP by step removal
     # # find areas of 9 pixels
     # kernel = get_filter(0.3,0.3,0,-0.08,-0.03)
@@ -215,7 +223,20 @@ def max_blur(image, size, mask_size = 3):
 if __name__ == "__main__":
     from os.path import join,realpath,abspath
     from pathlib import Path
-    for i in range(1,10): # which sequences
+    import tensorflow as tf
+    from  model import settings
+    from itertools import product
+    WINDOW_SIZE = settings.WINDOW_SIZE
+    def get_window(img, x, y, i):
+        image = np.pad(img, WINDOW_SIZE//2)
+        tup = (i, x, y)
+        x += WINDOW_SIZE//2
+        y += WINDOW_SIZE//2
+        to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
+        return to_pred, tup
+    model_time = 618916611
+    model = tf.keras.models.load_model('model\models\model' + str(model_time))
+    for i in range(1,3): # which sequences
         for j in range(1,2): # which frames
             path = Path(join(Path(__file__).parent.absolute(),"train"))
             img = cv2.imread(str(join(path, str(i), str(j))) + '.png', cv2.IMREAD_GRAYSCALE)
@@ -225,19 +246,27 @@ if __name__ == "__main__":
 
             img = filter_image(img)
             
-            cv2.namedWindow("convolution",cv2.WINDOW_NORMAL)
-            cv2.resizeWindow("convolution",640,480)
-            cv2.imshow("convolution", img)
+            cv2.namedWindow("filtered",cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("filtered",640,480)
+            cv2.imshow("filtered", img)
 
-            path = Path(join(Path(__file__).parent.absolute(),"groundtruth"))
-            gt = cv2.imread(str(join(path, str(i), str(j))) + '.png', cv2.IMREAD_GRAYSCALE)
-            cv2.namedWindow("groundtruth",cv2.WINDOW_NORMAL)
-            cv2.resizeWindow("groundtruth",640,480)
-            cv2.imshow("groundtruth", gt)
-
-            cv2.namedWindow("gt-img",cv2.WINDOW_NORMAL)
-            cv2.resizeWindow("gt-img",640,480)
-            cv2.imshow("gt-img", cv2.subtract(gt, img))
+            to_pred = []
+            coords = []
+            for x, y in product(range(img.shape[0]),range(img.shape[1])):
+                if img[x,y] > 0:
+                    window, coord = get_window(img, x, y, 0)
+                    to_pred.append(window)
+                    coords.append(coord)
+            img = img / 255.0
+            if len(to_pred) > 0:
+                p = model.predict(np.array(to_pred))
+                for i, coord in enumerate(coords):
+                    img[coord[1], coord[2]] = p[i][0]
+            img *= 255.
+            img = img.astype(np.uint8)
+            cv2.namedWindow("predicted",cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("predicted",640,480)
+            cv2.imshow("predicted", img)
 
             cv2.waitKey()
             cv2.destroyAllWindows()

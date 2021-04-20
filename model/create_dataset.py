@@ -22,17 +22,26 @@ ds_true = []
 for frame in ds_frames:
     for sat in range(frame['num_objects']):
         ds_true.append((frame['sequence_id'], frame['frame'], int(frame['object_coords'][sat][0]), int(frame['object_coords'][sat][1])))
-        
-def get_image(anno):
+
+from itertools import product  
+def get_image(anno, PATH_TRUE, i):
     seq = anno[0]
     frame = anno[1]
-    x = anno[2]
-    y = anno[3]
-    path = images_path + "\\" + str(seq) +  "\\" + str(frame) + ".png"
-    image = cv2.imread(path, 0) # 0 for greyscale
-    size = WINDOW_SIZE // 2
-    image = np.pad(image, size, mode = 'reflect')
-    img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
+    x0 = anno[2]
+    y0 = anno[3]
+    it = 0
+    for dx, dy in product([-1,0,1], [-1,0,1]):
+        x = x0 + dx
+        if x < 0 or x > 640: continue
+        y = y0 + dy
+        if y < 0 or y > 480: continue
+        path = images_path + "\\" + str(seq) +  "\\" + str(frame) + ".png"
+        image = cv2.imread(path, 0) # 0 for greyscale
+        size = WINDOW_SIZE // 2
+        image = np.pad(image, size, mode = 'reflect')
+        img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
+        cv2.imwrite(PATH_TRUE + str(i * 5 + it) + ".png", img)
+        it += 1
     return img
 
 # def get_false_image(anno):
@@ -54,10 +63,10 @@ def get_image(anno):
 #     img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
 #     return img
 
-# PATH_TRUE = "model\\dataset_nn\\1\\"
-# for i in tqdm(range(len(ds_true))):
-#     img = get_image(ds_true[i])
-#     cv2.imwrite(PATH_TRUE + str(i) + ".png", img)
+PATH_TRUE = "model\\dataset_nn\\1\\"
+for i in tqdm(range(len(ds_true))):
+    img = get_image(ds_true[i], PATH_TRUE, i)
+    # cv2.imwrite(PATH_TRUE + str(i) + ".png", img)
 
 from filters import filter_image
 from itertools import product
@@ -73,12 +82,13 @@ def create_false_sample(true, iter, path):
             continue
         if filtered_img[y, x] > 0:
             iter += 1
-            if iter % 200 > 0:
+            # if iter % 200 > 0:
+            if iter % 100 > 0:
                 continue
             img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
             cv2.imwrite(PATH_FALSE + str(iter) + ".png", img)
-            plt.imshow(img)
-            plt.show()
+            # plt.imshow(img)
+            # plt.show()
     return iter
 
 PATH_FALSE = "model\\dataset_nn\\0\\"

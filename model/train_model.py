@@ -1,5 +1,5 @@
-from model.create_dataset import WINDOW_SIZE
 import numpy as np
+import settings
 import tensorflow as tf
 import time
 import os
@@ -11,10 +11,10 @@ ds_size = len(os.listdir("model/dataset_nn/1"))
 ds_size += len(os.listdir("model/dataset_nn/0"))
 print(ds_size)
 
-from model import settings
+
 BATCH_SIZE = 32
 WINDOW_SIZE = settings.WINDOW_SIZE
-SEED = 321
+SEED = settings.SEED
 TRAIN_DIR = "model/dataset_nn"
 
 #https://keras.io/api/preprocessing/image/
@@ -59,14 +59,15 @@ def get_augmenter():
 def get_model():
     model = tf.keras.Sequential()
     model.add(get_augmenter())
-    model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
-    model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-    model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu'))
-    model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+    model.add(tf.keras.layers.Conv2D(128, (3, 3), activation='relu'))
+    # model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+    model.add(tf.keras.layers.Conv2D(128, (3, 3), activation='relu'))
+    # model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+    # model.add(tf.keras.layers.Conv2D(128, (2, 2), activation='relu'))
     model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(64, activation='relu'))
+    model.add(tf.keras.layers.Dense(512, activation='relu'))
     model.add(tf.keras.layers.Dropout(0.2))
-    model.add(tf.keras.layers.Dense(32, activation='relu'))
+    model.add(tf.keras.layers.Dense(256, activation='relu'))
     model.add(tf.keras.layers.Dropout(0.2))
     model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
     # model.compile(optimizer='Adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
@@ -75,15 +76,15 @@ def get_model():
 
 model = get_model()
 
-model.fit(train_ds, validation_data=val_ds, epochs=5)
+model.fit(train_ds, validation_data=val_ds, epochs=3)
 model.summary()
 
-t = str(int(time.time()) % 10000000)
+t = str(int(time.time()) % 1000000000)
 model.save('model/models/model' + t)
 print("Saved: model" + t)
 
 acc = model.evaluate(test_ds, verbose=0, return_dict=True)
 print(acc)
-    
+
 # model = tf.keras.models.load_model('models/model' + time)
 
