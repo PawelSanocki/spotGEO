@@ -45,7 +45,7 @@ def filter_image(img):
 ########################################
     max_blur_img = np.array(myFilters.max_blur(img,7,3))
     max_blur_img = cv2.subtract(img,max_blur_img)
-    _, max_blur_img = cv2.threshold(max_blur_img, 5, 255, cv2.THRESH_BINARY)
+    _, max_blur_img = cv2.threshold(max_blur_img, 3, 255, cv2.THRESH_BINARY)
     # kernel = np.uint8(np.array([[1,1,1],[1,1,1],[1,1,1]]))
     # max_blur_img = cv2.dilate(max_blur_img, kernel, iterations=2)
 
@@ -234,10 +234,10 @@ if __name__ == "__main__":
         y += WINDOW_SIZE//2
         to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
         return to_pred, tup
-    model_time = 618916611
+    model_time = 618951961
     model = tf.keras.models.load_model('model\models\model' + str(model_time))
-    for i in range(1,3): # which sequences
-        for j in range(1,2): # which frames
+    for i in range(1,4): # which sequences
+        for j in range(1,3): # which frames
             path = Path(join(Path(__file__).parent.absolute(),"train"))
             img = cv2.imread(str(join(path, str(i), str(j))) + '.png', cv2.IMREAD_GRAYSCALE)
             cv2.namedWindow('org',cv2.WINDOW_NORMAL)

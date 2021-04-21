@@ -7,8 +7,8 @@ import timeit
 import copy
 from matplotlib import pyplot as plt
 
-SATELLITE = 0.5
-SCORE_THRESHOLD = 2.5
+SATELLITE = 0.4
+SCORE_THRESHOLD = 2.2
 MARGIN = 3
 DIRECTIONS_SIMILARITY = 10
 TRAJECTORY_SIMILARITY = 10
