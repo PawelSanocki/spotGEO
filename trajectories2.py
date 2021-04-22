@@ -8,8 +8,8 @@ import copy
 from matplotlib import pyplot as plt
 
 SATELLITE = 0.4
-SCORE_THRESHOLD = 2.2
-MARGIN = 3
+SCORE_THRESHOLD = 2.0
+MARGIN = 4
 DIRECTIONS_SIMILARITY = 10
 TRAJECTORY_SIMILARITY = 10
 

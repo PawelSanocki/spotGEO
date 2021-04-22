@@ -234,7 +234,7 @@ if __name__ == "__main__":
         y += WINDOW_SIZE//2
         to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
         return to_pred, tup
-    model_time = 618951961
+    model_time = 619082430
     model = tf.keras.models.load_model('model\models\model' + str(model_time))
     for i in range(1,4): # which sequences
         for j in range(1,3): # which frames

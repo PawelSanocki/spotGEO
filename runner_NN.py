@@ -17,10 +17,11 @@ from model import settings
 
 WINDOW_SIZE = settings.WINDOW_SIZE
 
-def run(model_time = None):
-    if model_time == None:
-        model_time = 618951961
-    model = tf.keras.models.load_model('model\models\model' + str(model_time))
+def run(model = None):
+    if model is None:
+        model_time = 619082430
+        model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
+        model.compile()
 
     def get_window(img, x, y, i):
         image = np.pad(img, WINDOW_SIZE//2)
@@ -43,11 +44,11 @@ def run(model_time = None):
             iter += 1
         plt.show()
 
-    path = join(Path(__file__).parent.absolute(),"test")
+    path = join(Path(__file__).parent.absolute(),"train")
     # path = join(Path(__file__).parent.absolute(),"train")
     results = []
 
-    for seq in tqdm(range(50)):
+    for seq in tqdm(range(10)):
     # for seq in tqdm(range(len(next(os.walk(path))[1]))):
         imgs = []
         original_imgs = []

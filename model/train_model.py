@@ -1,16 +1,17 @@
 import numpy as np
-import settings
+import model.settings as settings
 import tensorflow as tf
 import time
 import os
 import matplotlib.pyplot as plt
+from sklearn.model_selection import StratifiedKFold
+from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import cross_val_score
+import tensorflow_addons as tfa
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # or any {'0', '1', '2'}
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 print("Version: ",tf.__version__)
-ds_size = len(os.listdir("model/dataset_nn/1"))
-ds_size += len(os.listdir("model/dataset_nn/0"))
-print(ds_size)
-
 
 BATCH_SIZE = 32
 WINDOW_SIZE = settings.WINDOW_SIZE
@@ -18,11 +19,16 @@ SEED = settings.SEED
 TRAIN_DIR = "model/dataset_nn"
 
 def get_trained_model():
+    ds_size = len(os.listdir("model/dataset_nn/1"))
+    ds_size += len(os.listdir("model/dataset_nn/0"))
+    print(ds_size)
+
     #https://keras.io/api/preprocessing/image/
     dataset = tf.keras.preprocessing.image_dataset_from_directory(
         directory=TRAIN_DIR,
         labels="inferred",
         label_mode="binary",
+        # label_mode="",
         image_size=(WINDOW_SIZE,WINDOW_SIZE),
         seed=SEED,
         color_mode="grayscale",
@@ -79,25 +85,28 @@ def get_trained_model():
         input = tf.keras.Input(shape=(WINDOW_SIZE,WINDOW_SIZE,1))
         img = get_augmenter()(input)
         x = tf.keras.layers.Conv2D(128, (3, 3), activation='relu')(input)
-        x = tf.keras.layers.Conv2D(128, (3, 3), activation='relu')(x)
+        x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Flatten()(x)
         y = tf.keras.layers.Flatten()(img)
         xy = tf.keras.layers.concatenate([x, y])
-        xy = tf.keras.layers.Dense(512, activation='relu')(xy)
-        xy = tf.keras.layers.Dropout(0.2)(xy)
-        xy = tf.keras.layers.Dense(512, activation='relu')(xy)
-        xy = tf.keras.layers.Dropout(0.2)(xy)
-        xy = tf.keras.layers.Dense(512, activation='relu')(xy)
-        xy = tf.keras.layers.Dropout(0.2)(xy)
+        xy = tf.keras.layers.Dense(256, activation='relu')(xy)
+        xy = tf.keras.layers.Dropout(0.1)(xy)
+        xy = tf.keras.layers.Dense(128, activation='relu')(xy)
+        xy = tf.keras.layers.Dropout(0.1)(xy)
+        xy = tf.keras.layers.Dense(64, activation='relu')(xy)
+        xy = tf.keras.layers.Dropout(0.1)(xy)
         output = tf.keras.layers.Dense(1, activation='sigmoid')(xy)
         model = tf.keras.Model(input, output)
-        model.compile(optimizer=tf.keras.optimizers.Adam(0.001), loss=tf.keras.losses.MeanSquaredError())
+        # model.compile(optimizer=tf.keras.optimizers.Adam(0.001), loss=tf.keras.losses.MeanSquaredError())
+        model.compile(optimizer='Adam', loss="binary_crossentropy", 
+            metrics=[tfa.metrics.F1Score(num_classes=1, average='micro', threshold=0.4)]
+            )
         return model
 
     model = get_model_2()
 
-    model.fit(train_ds, validation_data=val_ds, epochs=3)
+    model.fit(train_ds, validation_data=val_ds, epochs=2)
     model.summary()
 
     t = str(int(time.time()) % 1000000000)
@@ -107,7 +116,7 @@ def get_trained_model():
     acc = model.evaluate(test_ds, verbose=0, return_dict=True)
     print(acc)
 
-    return t
+    return model
 # model = tf.keras.models.load_model('models/model' + time)
 
 if __name__ == "__main__":
