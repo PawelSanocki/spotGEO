@@ -80,6 +80,7 @@ def create_dataset():
         size = WINDOW_SIZE // 2
         image = np.pad(image, size, mode = 'reflect')
         for y, x in product(range(filtered_img.shape[0]),range(filtered_img.shape[1])):
+            if filtered_img[y, x] == 0: continue
             flag = False
             for dx, dy in product([-1,0,1], [-1,0,1]):
                 if (y+dy,x+dx) in true:

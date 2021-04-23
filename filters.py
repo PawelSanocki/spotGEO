@@ -218,14 +218,13 @@ def max_blur(image, size, mask_size = 3):
     img = np.max(img,-1)
     return img
 
-
-
 if __name__ == "__main__":
     from os.path import join,realpath,abspath
     from pathlib import Path
     import tensorflow as tf
     from  model import settings
     from itertools import product
+    from filter_NN import filter_NN
     WINDOW_SIZE = settings.WINDOW_SIZE
     def get_window(img, x, y, i):
         image = np.pad(img, WINDOW_SIZE//2)
@@ -234,17 +233,18 @@ if __name__ == "__main__":
         y += WINDOW_SIZE//2
         to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
         return to_pred, tup
-    model_time = 619082430
-    model = tf.keras.models.load_model('model\models\model' + str(model_time))
+    model_time = 619096996
+    model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
+    model.compile()
     for i in range(1,4): # which sequences
         for j in range(1,3): # which frames
             path = Path(join(Path(__file__).parent.absolute(),"train"))
-            img = cv2.imread(str(join(path, str(i), str(j))) + '.png', cv2.IMREAD_GRAYSCALE)
+            org_img = cv2.imread(str(join(path, str(i), str(j))) + '.png', cv2.IMREAD_GRAYSCALE)
             cv2.namedWindow('org',cv2.WINDOW_NORMAL)
             cv2.resizeWindow('org',640,480)
-            cv2.imshow('org', img)
+            cv2.imshow('org', org_img)
 
-            img = filter_image(img)
+            img = filter_image(org_img)
             
             cv2.namedWindow("filtered",cv2.WINDOW_NORMAL)
             cv2.resizeWindow("filtered",640,480)
