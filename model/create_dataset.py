@@ -89,7 +89,7 @@ def create_dataset():
             if filtered_img[y, x] > 0:
                 iter += 1
                 # if iter % 200 > 0:
-                if iter % 100 > 0:
+                if iter % 50 > 0:
                     continue
                 img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
                 cv2.imwrite(PATH_FALSE + str(iter) + ".png", img)

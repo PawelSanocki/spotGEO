@@ -1,5 +1,5 @@
 import numpy as np
-import model.settings as settings
+import settings as settings
 import tensorflow as tf
 import time
 import os

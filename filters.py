@@ -4,7 +4,7 @@ from typing import List
 #from skimage.measure import label, regionprops
 import copy
 # from filters import maxBlur
-
+from scipy import stats
 #import pyximport; pyximport.install()
 import myFilters.myFilters as myFilters
 
@@ -43,14 +43,26 @@ def filter_image(img):
     # # img = img * max_blur_img
     # img = max_blur_img
 ########################################
-    max_blur_img = np.array(myFilters.max_blur(img,7,3))
-    max_blur_img = cv2.subtract(img,max_blur_img)
-    _, max_blur_img = cv2.threshold(max_blur_img, 3, 255, cv2.THRESH_BINARY)
-    # kernel = np.uint8(np.array([[1,1,1],[1,1,1],[1,1,1]]))
-    # max_blur_img = cv2.dilate(max_blur_img, kernel, iterations=2)
+    # max_blur_img = np.array(myFilters.max_blur(img,7,5))
+    # max_blur_img = cv2.subtract(img,max_blur_img)
+    # _, max_blur_img = cv2.threshold(max_blur_img, 5, 255, cv2.THRESH_BINARY)
 
-    # img = img * max_blur_img
-    img = max_blur_img
+    # img = max_blur_img
+##################
+    max_blur_img = np.array(myFilters.max_blur(img,7,5))
+    img = img.astype(np.int)
+    max_blur_img = max_blur_img.astype(np.int)
+    max_blur_img = img - max_blur_img
+
+    amount = 1000
+    flat = max_blur_img.flatten()
+    ind = np.argpartition(flat, -amount)[-amount:]
+
+    th = flat[ind].min()
+    max_blur_img[max_blur_img > th] = 255
+    max_blur_img[max_blur_img <= th] = 0
+
+    img = max_blur_img.astype(np.uint8)
 ######################################## STEP by step removal
     # # find areas of 9 pixels
     # kernel = get_filter(0.3,0.3,0,-0.08,-0.03)
@@ -233,11 +245,11 @@ if __name__ == "__main__":
         y += WINDOW_SIZE//2
         to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
         return to_pred, tup
-    model_time = 619096996
+    model_time = 619527674
     model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
     model.compile()
-    for i in range(1,4): # which sequences
-        for j in range(1,3): # which frames
+    for i in range(1,2): # which sequences
+        for j in range(1,2): # which frames
             path = Path(join(Path(__file__).parent.absolute(),"train"))
             org_img = cv2.imread(str(join(path, str(i), str(j))) + '.png', cv2.IMREAD_GRAYSCALE)
             cv2.namedWindow('org',cv2.WINDOW_NORMAL)
