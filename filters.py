@@ -7,7 +7,7 @@ import copy
 from scipy import stats
 #import pyximport; pyximport.install()
 import myFilters.myFilters as myFilters
-
+import matplotlib.pyplot as plt
 IMAGE_HEIGHT = 480
 IMAGE_WIDTH = 640
 
@@ -54,11 +54,11 @@ def filter_image(img):
     max_blur_img = max_blur_img.astype(np.int)
     max_blur_img = img - max_blur_img
 
-    amount = 1000
+    amount = 200
     flat = max_blur_img.flatten()
     ind = np.argpartition(flat, -amount)[-amount:]
 
-    th = flat[ind].min()
+    th = flat[ind].min() - 0
     max_blur_img[max_blur_img > th] = 255
     max_blur_img[max_blur_img <= th] = 0
 
@@ -230,6 +230,26 @@ def max_blur(image, size, mask_size = 3):
     img = np.max(img,-1)
     return img
 
+import json
+def get_objects_coords(sequence, frame):
+    train_anno_path = "train_anno.json"
+    images_path = "train"
+
+    with open(train_anno_path, 'r') as f:
+        anno = json.load(f)
+    anno = anno[(sequence - 1) * 5 + frame - 1] # starts from 0
+    object_coords = np.array(anno['object_coords'])
+    return object_coords.astype(np.int)
+    
+def show_marked_image(img, object_coords, name):
+    marked_img = cv2.cvtColor(img.copy(), cv2.COLOR_GRAY2BGR)
+    for coords in object_coords:
+        print(coords)
+        marked_img = cv2.circle(marked_img, coords, 14, (0,0,255), 1)
+    cv2.namedWindow(name,cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(name,640,480)
+    cv2.imshow(name, marked_img)
+
 if __name__ == "__main__":
     from os.path import join,realpath,abspath
     from pathlib import Path
@@ -245,22 +265,30 @@ if __name__ == "__main__":
         y += WINDOW_SIZE//2
         to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
         return to_pred, tup
-    model_time = 619527674
+    model_time = 623070793
     model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
     model.compile()
-    for i in range(1,2): # which sequences
+    for i in range(11,12): # which sequences
         for j in range(1,2): # which frames
+            object_coords = get_objects_coords(i, j)
+            # f, axarr = plt.subplots(1,3)
             path = Path(join(Path(__file__).parent.absolute(),"train"))
             org_img = cv2.imread(str(join(path, str(i), str(j))) + '.png', cv2.IMREAD_GRAYSCALE)
+            # axarr[0].imshow(org_img)
+            # axarr[0].set_title("Original")
             cv2.namedWindow('org',cv2.WINDOW_NORMAL)
             cv2.resizeWindow('org',640,480)
             cv2.imshow('org', org_img)
+            show_marked_image(org_img, object_coords, "marked_org")
 
             img = filter_image(org_img)
             
+            # axarr[1].imshow(img)
+            # axarr[1].set_title("Initial filter")
             cv2.namedWindow("filtered",cv2.WINDOW_NORMAL)
             cv2.resizeWindow("filtered",640,480)
             cv2.imshow("filtered", img)
+            show_marked_image(img, object_coords, "marked_filtered")
 
             to_pred = []
             coords = []
@@ -279,7 +307,10 @@ if __name__ == "__main__":
             cv2.namedWindow("predicted",cv2.WINDOW_NORMAL)
             cv2.resizeWindow("predicted",640,480)
             cv2.imshow("predicted", img)
-
+            show_marked_image(img, object_coords, "marked_predicted")
+            # axarr[2].imshow(img)
+            # axarr[2].set_title("Classifier")
+            plt.show()
             cv2.waitKey()
             cv2.destroyAllWindows()
 

@@ -7,11 +7,12 @@ import timeit
 import copy
 from matplotlib import pyplot as plt
 
-SATELLITE = 0.4
-SCORE_THRESHOLD = 2.0
-MARGIN = 4
+SATELLITE = 0.7
+SCORE_THRESHOLD = 4
+MARGIN = 5
 DIRECTIONS_SIMILARITY = 10
 TRAJECTORY_SIMILARITY = 10
+MAX_TRAJECTORIES = 15
 
 def preprocess_images(imgs: np.ndarray) -> np.ndarray:
     '''
@@ -30,12 +31,12 @@ def remove_blobs(img):
     :param imgs: stacked images in the sequence, shape (5,480,640)
     :returns: stacked images in the sequence, shape (5,480,640)
     '''
-    reg, img = cv2.threshold(img, SATELLITE, 1, cv2.THRESH_BINARY)
+    reg, mask = cv2.threshold(img, SATELLITE, 1, cv2.THRESH_BINARY)
     # cv2.imshow("1", img)
     # cv2.waitKey()
-    img = np.uint8(img * 255)
-    _, contours, hierarchy = cv2.findContours(img,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) # comment img
-    img = np.zeros_like(img)
+    mask = np.uint8(mask * 255)
+    contours, hierarchy = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) # comment img
+    new_img = np.zeros_like(img)
     for c in contours:
         M = cv2.moments(c)
         if M["m00"] == 0:
@@ -44,10 +45,14 @@ def remove_blobs(img):
         else:
             cY = int(M["m10"] / M["m00"])
             cX = int(M["m01"] / M["m00"])
-        img[cX,cY] = 255
+        mask = np.zeros_like(img)
+        mask = cv2.drawContours(mask, [c], -1, 255, -1)
+        _, max_val, _, _ = cv2.minMaxLoc(img, mask = mask)
+        new_img[cX,cY] = max_val
     # cv2.imshow("", img)
     # cv2.waitKey()
-    return np.int32(img) / 255
+    return new_img
+
 def add_noise(imgs, amount=0):
     '''
     Any preprocessing required, will be adjusted to fit the results from other methods
@@ -207,7 +212,7 @@ def clear_trajectories(trajectories: dict, star_direction: tuple = None, keep_on
                     worst_key = k
                     worst_score = t[-1]
                     worst_trajectory = t
-        if number_of_trajectories <= 30:
+        if number_of_trajectories <= MAX_TRAJECTORIES:
             break
         clean_traj[worst_key].remove(worst_trajectory)
     return clean_traj
@@ -220,7 +225,7 @@ def find_stars_direction(imgs: np.ndarray) -> tuple:
     """
     direction = (100,0,0)
     imgs = copy.deepcopy(imgs)
-    imgs = preprocess_images(imgs)
+    # imgs = preprocess_images(imgs)
     min_max = 1
     for img in imgs:
         maximum = np.max(img)

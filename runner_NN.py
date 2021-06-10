@@ -17,10 +17,11 @@ from model import settings
 from filter_NN import filter_NN
 
 WINDOW_SIZE = settings.WINDOW_SIZE
+NUM_SEQUENCES = 50
 
 def run(model = None):
     if model is None:
-        model_time = 619082430
+        model_time = 623070793
         model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
         model.compile()
 
@@ -38,11 +39,11 @@ def run(model = None):
             iter += 1
         plt.show()
 
-    path = join(Path(__file__).parent.absolute(),"train")
+    path = join(Path(__file__).parent.absolute(),"test")
     # path = join(Path(__file__).parent.absolute(),"train")
     results = []
 
-    for seq in tqdm(range(10)):
+    for seq in tqdm(range(NUM_SEQUENCES)):
     # for seq in tqdm(range(len(next(os.walk(path))[1]))):
         imgs = []
         original_imgs = []

@@ -16,15 +16,26 @@ import matplotlib.pyplot as plt
 from model import settings
 from filter_NN import filter_NN
 
+ST = 0.7 # satellite threshold
+NEIGHBOUR_SIZE = 3
+
+def remove_neighbourhood(mask, y, x):
+    for i in range(-NEIGHBOUR_SIZE, NEIGHBOUR_SIZE+1):
+        for j in range(-NEIGHBOUR_SIZE, NEIGHBOUR_SIZE+1):
+            if not (i == j == 0 or 0 > y + i or y + i >= 480 or 0 > x + j or x + j >= 640):
+                mask[y + i, x + j] = 0
+    return mask
+
 def evaluate_image(mask, anno):
     TP, TN, FP, FN = 0,0,0,0
     coords = anno["object_coords"]
     for coord in coords:
-        if mask[int(coord[1]),int(coord[0])] > 0:
+        if mask[int(coord[1]),int(coord[0])] >= ST:
+            mask = remove_neighbourhood(mask, int(coord[1]), int(coord[0]))
             TP += 1
         else:
             FN += 1
-    FP = (mask>0).sum() - TP
+    FP = (mask>=ST).sum() - TP
     TN = mask.size - TP - FN - FP
     return TP, TN, FP, FN
     
@@ -74,7 +85,7 @@ def evaluate(model = None):
             image = filter_image(img)
             imgs.append(image)
         for i, img in enumerate(imgs):
-            tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
+            tp, tn, fp, fn = evaluate_image(img / 255., annotations[seq*5+i])
             TP += tp
             TN += tn
             FP += fp
