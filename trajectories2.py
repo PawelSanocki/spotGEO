@@ -7,14 +7,7 @@ import timeit
 import copy
 from matplotlib import pyplot as plt
 
-SATELLITE = 0.7
-SCORE_THRESHOLD = 4
-MARGIN = 5
-DIRECTIONS_SIMILARITY = 10
-TRAJECTORY_SIMILARITY = 10
-MAX_TRAJECTORIES = 15
-
-def preprocess_images(imgs: np.ndarray) -> np.ndarray:
+def preprocess_images(imgs: np.ndarray, satellite_th) -> np.ndarray:
     '''
     Preprocessing required before creating trajectories
     Shrinking the blobs to single pixels
@@ -22,16 +15,16 @@ def preprocess_images(imgs: np.ndarray) -> np.ndarray:
     :returns: stacked images in the sequence, shape (5,480,640)
     '''
     for i in range(5):
-        imgs[i] = remove_blobs(imgs[i])
+        imgs[i] = remove_blobs(imgs[i], satellite_th)
     return imgs
-def remove_blobs(img):
+def remove_blobs(img, satellite_th):
     '''
     Preprocessing required before creating trajectories
     Shrinking the blobs to single pixels
     :param imgs: stacked images in the sequence, shape (5,480,640)
     :returns: stacked images in the sequence, shape (5,480,640)
     '''
-    reg, mask = cv2.threshold(img, SATELLITE, 1, cv2.THRESH_BINARY)
+    reg, mask = cv2.threshold(img, satellite_th, 1, cv2.THRESH_BINARY)
     # cv2.imshow("1", img)
     # cv2.waitKey()
     mask = np.uint8(mask * 255)
@@ -74,7 +67,7 @@ def get_sequence(path: str):
     imgs = np.stack(imgs)
     return imgs
 
-def generate_points(imgs):
+def generate_points(imgs, satellite_th):
     '''
     imgs - matrix of shape (5, 480, 640)
     '''
@@ -84,42 +77,24 @@ def generate_points(imgs):
         for x in range(imgs.shape[1]):
             for y in range(imgs.shape[2]):
                 # threshold, states where we are sure that model predicted satellite correctly
-                if imgs[t,x,y] > SATELLITE:
+                if imgs[t,x,y] > satellite_th:
                     # x,y swaped due to json notation
                     points_in_frame.append(tuple((t,y,x)))
         points.append(points_in_frame)
     return points
 
-def calculate_direction(points, imgs):
+def calculate_direction(points, imgs, score_threshold, margin):
     '''
     Finds colinear points on one image
     Returns dictionary with all directions found
     '''
-    # directions = dict()
-    # for i in range(4):
-    #     for j in range(i+1, 5): # might be in range(i+1, 4) for speedup as we do not need to find just two points, range(i+1, 5) if we need better results
-    #         points_copy_1 = copy.deepcopy(points)
-    #         for p_1 in range(len(points_copy_1[i])):
-    #             p1 = points_copy_1[i][p_1]
-    #             points_copy_2 = copy.deepcopy(points)
-    #             for p_2 in range(len(points_copy_2[j])):
-    #                 p2 = points_copy_2[j][p_2]
-    #                 trajectory, score, direction = predict_points(p1, p2, imgs)
-    #                 if score < SCORE_THRESHOLD: continue
-    #                 direction = tuple(direction)
-    #                 if direction in directions.keys():
-    #                     directions[direction].append(copy.deepcopy(trajectory))
-    #                 else:
-    #                     directions[direction] = [copy.deepcopy(trajectory)]
-    #                 break
-    # return directions
     directions = dict()
     for i in range(4):
         for j in range(i+1, 5): # might be in range(i+1, 4) for speedup as we do not need to find just two points, range(i+1, 5) if we need better results
             for p1 in points[i]:
                 for p2 in points[j]:
-                    trajectory, score, direction = predict_points(p1, p2, imgs)
-                    if score < SCORE_THRESHOLD: continue
+                    trajectory, score, direction = predict_points(p1, p2, imgs, margin)
+                    if score < score_threshold: continue
                     direction = tuple(direction)
                     if direction in directions.keys():
                         directions[direction].append(copy.deepcopy(trajectory))
@@ -128,7 +103,7 @@ def calculate_direction(points, imgs):
                     break
     return directions
 
-def predict_points(p1,p2,imgs):
+def predict_points(p1,p2,imgs, margin):
     p1 = np.array(p1)
     p2 = np.array(p2)
     direction = ((p1 - p2) / (p1[0] - p2[0]))
@@ -141,7 +116,7 @@ def predict_points(p1,p2,imgs):
         #if 0 <= p[1] < imgs.shape[1] and 0 <= p[2] < imgs.shape[2]:
         if 0 <= p[2] < imgs.shape[1] and 0 <= p[1] < imgs.shape[2]:
             #score += np.max(imgs[p[0], max(p[1]-1,0):p[1]+2, max(p[2]-1,0):p[2]+2])
-            score += np.max(imgs[p[0],max(p[2]-MARGIN,0):p[2]+1+MARGIN , max(p[1]-MARGIN,0):p[1]+1+MARGIN])
+            score += np.max(imgs[p[0],max(p[2]-margin,0):p[2]+1+margin , max(p[1]-margin,0):p[1]+1+margin])
         else:
             score = 0
             break
@@ -151,18 +126,19 @@ def predict_points(p1,p2,imgs):
 def merge_images(imgs):
     return imgs[0] + imgs[1] + imgs[2] + imgs[3] + imgs[4]
 
-def clear_trajectories(trajectories: dict, star_direction: tuple = None, keep_only_best: bool = False) -> dict:
+def clear_trajectories(trajectories: dict, star_direction: tuple = None, keep_only_best: bool = False, 
+                        directions_similarity = 10, trajectory_similarity = 10, max_trajectories = 15) -> dict:
     clean_traj = dict()
     # merge directions and directories
     for key in trajectories.keys():
         is_different = True
         for key2 in clean_traj.keys():
-            if all(np.abs(np.array(key) - np.array(key2)) < DIRECTIONS_SIMILARITY):
+            if all(np.abs(np.array(key) - np.array(key2)) < directions_similarity):
                 is_different = False
                 for item in trajectories[key]:
                     already_included = False
                     for item2 in clean_traj[key2]:
-                        if all(np.abs(np.array(item[0]) - np.array(item2[0])) < TRAJECTORY_SIMILARITY):
+                        if all(np.abs(np.array(item[0]) - np.array(item2[0])) < trajectory_similarity):
                             already_included = True
                             if item2[-1] < item[-1]:
                                 item2 = item
@@ -173,7 +149,7 @@ def clear_trajectories(trajectories: dict, star_direction: tuple = None, keep_on
             for item in trajectories[key]:
                 already_included = False
                 for item2 in clean_traj[key]:
-                    if all(np.array(item[0]) - np.array(item2[0]) < TRAJECTORY_SIMILARITY):
+                    if all(np.array(item[0]) - np.array(item2[0]) < trajectory_similarity):
                         already_included = True
                         if item2[-1] < item[-1]:
                             item2 = item
@@ -183,7 +159,7 @@ def clear_trajectories(trajectories: dict, star_direction: tuple = None, keep_on
     if star_direction != None:
         k = None
         for key in clean_traj.keys():
-            if all(np.abs(np.array(star_direction) - np.array(key)) < TRAJECTORY_SIMILARITY):
+            if all(np.abs(np.array(star_direction) - np.array(key)) < trajectory_similarity):
                 k = key
                 break
         if k is not None:
@@ -191,7 +167,6 @@ def clear_trajectories(trajectories: dict, star_direction: tuple = None, keep_on
     # keep only one best direction
     if keep_only_best:
         biggest_number_of_trajectories = 0
-        best_score = 0
         best_key = None
         for key in clean_traj.keys():
             if biggest_number_of_trajectories < len(clean_traj[key]):
@@ -212,12 +187,12 @@ def clear_trajectories(trajectories: dict, star_direction: tuple = None, keep_on
                     worst_key = k
                     worst_score = t[-1]
                     worst_trajectory = t
-        if number_of_trajectories <= MAX_TRAJECTORIES:
+        if number_of_trajectories <= max_trajectories:
             break
         clean_traj[worst_key].remove(worst_trajectory)
     return clean_traj
 
-def find_stars_direction(imgs: np.ndarray) -> tuple:
+def find_stars_direction(imgs: np.ndarray, satellite_th = 0.5, score_threshold = 3, margin = 5) -> tuple:
     """
     Return the direction of stars shift. In case of too many detected stars, returns (100,0,0) as a direction without calculation not to increase the time.
     :param imgs: 3D, stacked original images, values 0-1 so divide by 255.0
@@ -234,7 +209,7 @@ def find_stars_direction(imgs: np.ndarray) -> tuple:
     for img in imgs:
         _, img = cv2.threshold(img, min_max * 0.95, 1, cv2.THRESH_BINARY)
         #img = cv2.adaptiveThreshold(np.uint8(img*255), 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 51, 1,) / 255.0
-    points = generate_points(imgs)
+    points = generate_points(imgs, satellite_th)
     for p in points:
         if len(p) > 50:
             return direction
@@ -242,7 +217,7 @@ def find_stars_direction(imgs: np.ndarray) -> tuple:
     #     cv2.imshow(str(i),imgs[i])
     # cv2.waitKey()
     # cv2.destroyAllWindows()
-    trajectories = calculate_direction(points, imgs)
+    trajectories = calculate_direction(points, imgs, score_threshold, margin)
     for k in trajectories.keys():
         direction = k
         break
@@ -253,7 +228,9 @@ def find_stars_direction(imgs: np.ndarray) -> tuple:
     # print(direction)
     return direction
 
-def sequence_into_trajectories(imgs: np.ndarray, original_images: np.ndarray = None, keep_only_best: bool = False) -> dict:
+def sequence_into_trajectories(imgs: np.ndarray, original_images: np.ndarray = None, keep_only_best: bool = False, 
+                                satellite_th = 0.7, score_threshold = 3, margin = 5, directions_similarity = 10, 
+                                trajectory_similarity = 10, max_trajectories = 15) -> dict:
     '''
     Return dictionary with directions as keys and list of sequences of points
     :param imgs: 3D, stacked filteres images, values 0-1 so divide by 255.0
@@ -261,18 +238,18 @@ def sequence_into_trajectories(imgs: np.ndarray, original_images: np.ndarray = N
     :param keep_only_best: if true keeps only the direction with the biggest number of trajectories
     :return: dictionary with directions as keys and lists of trajectories as values
     '''
-    imgs_clear = preprocess_images(imgs)
-    points = generate_points(imgs_clear)
+    imgs_clear = preprocess_images(imgs, satellite_th)
+    points = generate_points(imgs_clear, satellite_th)
     for p in points:
         if len(p) > 150:
             print()
             print(len(p))
             return dict()
-    trajectories = calculate_direction(points, imgs)
+    trajectories = calculate_direction(points, imgs, score_threshold, margin)
     if original_images is not None:
-        trajectories = clear_trajectories(trajectories, find_stars_direction(original_images), keep_only_best)
+        trajectories = clear_trajectories(trajectories, find_stars_direction(original_images), keep_only_best, directions_similarity, trajectory_similarity, max_trajectories)
     else:
-        trajectories = clear_trajectories(trajectories, keep_only_best=keep_only_best)
+        trajectories = clear_trajectories(trajectories, keep_only_best=keep_only_best, directions_similarity = directions_similarity, trajectory_similarity = trajectory_similarity, max_trajectories=max_trajectories)
     return trajectories
 
 if __name__ == "__main__":
@@ -287,8 +264,8 @@ if __name__ == "__main__":
 
     stop = timeit.default_timer()
     print('Time: ', stop - start) 
-    print("MARGIN: ", MARGIN)
-    print("SCORE_THRESHOLD: ", SCORE_THRESHOLD)
+    print("MARGIN: ", 5)
+    print("SCORE_THRESHOLD: ", 4)
     #print(directions)
     for i in directions.keys():
         print(i)

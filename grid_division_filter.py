@@ -1,3 +1,4 @@
+from matplotlib.pyplot import axis
 import numpy as np
 import tensorflow as tf
 import time
@@ -11,11 +12,11 @@ class GridSegmentatingModel(tf.keras.Model):
         super(GridSegmentatingModel, self).__init__(name=name, **kwargs)
 
         self.conv_1 = tf.keras.layers.Conv2D(
-            16, (3, 3), strides=(1, 1), padding='same', activation="relu")
+            128, (3, 3), strides=(1, 1), padding='same', activation="relu")
         self.conv_2 = tf.keras.layers.Conv2D(
-            16, (7, 7), strides=(4, 4), padding='same', activation="relu")
+            64, (7, 7), strides=(4, 4), padding='same', activation="relu")
         self.conv_3 = tf.keras.layers.Conv2D(
-            16, (3, 3), strides=(1, 1), padding='same', activation="relu")
+            32, (3, 3), strides=(1, 1), padding='same', activation="relu")
         self.conv_4 = tf.keras.layers.Conv2D(1, (1, 1), strides=(1, 1), activation="sigmoid")
 
     def call(self, input):
@@ -27,7 +28,7 @@ class GridSegmentatingModel(tf.keras.Model):
 
 
 class Data_generator(tf.keras.utils.Sequence):
-    def __init__(self, downsampling=4, val_size=100, batch_size = 2, shuffle=True, val=False):
+    def __init__(self, downsampling=4, val_size=100, batch_size = 4, shuffle=True, val=False):
         with open("train_anno.json", 'r') as f:
             if val:
                 self.annotations = json.load(f)[:val_size*5]
@@ -62,44 +63,58 @@ class Data_generator(tf.keras.utils.Sequence):
         if self.shuffle:
             random.shuffle(self.annotations)
 
+def F1_metric(y_true, y_pred):
+    smoothing = 1
+    intersection = tf.keras.backend.sum(y_true * y_pred, axis=[1,2,3])
+    union = tf.keras.backend.sum(y_true, axis=[1,2,3]) + tf.keras.backend.sum(y_pred, axis=[1,2,3])
+    dice = tf.keras.backend.mean((2. * intersection + smoothing)/(union + smoothing), axis=0)
+    return dice
 
-def train_model():
+def train_model(batch_size = 2):
     model = GridSegmentatingModel()
 
-    train_gen = Data_generator(downsampling=4)
+    train_gen = Data_generator(downsampling=4, batch_size=batch_size)
     val_gen = Data_generator(downsampling=4, val=True)
 
-
-    metrics = [tf.keras.metrics.Recall(name="Recall"),
-               tf.keras.metrics.Precision(name="Precision")]
-
     model.compile(optimizer=tf.keras.optimizers.RMSprop(),
-                  loss=tf.keras.losses.binary_crossentropy)
+                  loss=tf.keras.losses.binary_crossentropy, metrics=[F1_metric])
 
-    model.fit(train_gen, epochs=1, validation_data=val_gen)
+    history = model.fit(train_gen, epochs=5, validation_data=val_gen)
 
     t = str(int(time.time()) % 1000000000)
     model.save('model/models/grid_filter' + t)
     print("Saved: model" + t)
-    return model
+    return model, history
 
 
-def filter(imgs, model=None):
+def filter(imgs, model=None, model_number = None):
     if model is None:
-        model = tf.keras.models.load_model(
-            'model/models/grid_filter' + str(623327572), compile=True)
-    new_imgs = model.predict(imgs)
-    return new_imgs
+        if model_number is None:
+            model = tf.keras.models.load_model(
+                'model/models/grid_filter' + str(623680916), compile=False)
+        else:
+            model = tf.keras.models.load_model(
+                'model/models/grid_filter' + str(model_number), compile=False)
+    model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+                  loss=tf.keras.losses.binary_crossentropy, metrics=[F1_metric])
+
+    imgs = np.expand_dims(imgs.copy(), axis=-1)
+    imgs = imgs / 255.
+
+    r = model.predict(imgs)
+    # r[r > r.max() / 10. * 2] = 1
+    new_imgs = []
+    for im in r:
+        im = cv2.resize(im, (640, 480), interpolation=cv2.INTER_NEAREST)
+        new_imgs.append(im)
+    return new_imgs, model
 
 
 if __name__ == "__main__":
     model = None
-    # model = train_model()
-    img = cv2.imread("train/1/2.png", 0)
-    img = np.reshape(img, (1, 480, 640, 1)) / 255.
-    r = filter(img, model)[0]
-    print(r.max())
-    r[r > r.max() / 10. * 3] = 1
-    r = cv2.resize(r, (640, 480), interpolation=cv2.INTER_LINEAR)
+    # model, history = train_model()
+    img = cv2.imread("train/1/1.png", 0)
+    imgs = np.array([img])
+    r = filter(imgs, model, 623680916)[0]
     cv2.imshow("", r)
     cv2.waitKey()

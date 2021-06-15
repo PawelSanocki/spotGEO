@@ -19,7 +19,6 @@ def create_dataset():
 
     with open(train_anno_path, 'r') as f:
         ds_frames = json.load(f)
-    # print(ds_frames[0])
     ds_true = []
     for frame in ds_frames:
         for sat in range(frame['num_objects']):
@@ -45,25 +44,6 @@ def create_dataset():
             cv2.imwrite(PATH_TRUE + str(i * 5 + it) + ".png", img)
             it += 1
         return img
-
-    # def get_false_image(anno):
-    #     seq = np.random.randint(1,1281)
-    #     frame = np.random.randint(1,6)
-    #     path = images_path + "\\" + str(seq) +  "\\" + str(frame) + ".png"
-    #     image = cv2.imread(path, 0) # 0 for greyscale
-    #     img = filter_image(image)
-    #     y, x = np.nonzero(img)
-    #     if len(x) > 0:
-    #         rand = np.random.randint(0,len(x))
-    #         x = x[rand]
-    #         y = y[rand]
-    #     else:
-    #         x = np.random.randint(0,image.shape[1])
-    #         y = np.random.randint(0,image.shape[0])
-    #     size = WINDOW_SIZE // 2
-    #     image = np.pad(image, size, mode = 'reflect')
-    #     img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
-    #     return img
 
     PATH_TRUE = "model\\dataset_nn\\1\\"
     for i in tqdm(range(len(ds_true))):
@@ -98,9 +78,6 @@ def create_dataset():
         return iter
 
     PATH_FALSE = "model\\dataset_nn\\0\\"
-    # for i in tqdm(range(len(ds_true))):
-    #     img = get_false_image(ds_true[i])
-    #     cv2.imwrite(PATH_FALSE + str(i) + ".png",img)
     path = "train"
     iter = 0
     for i in tqdm(range(len(next(os.walk(path))[1]))):

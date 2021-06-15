@@ -15,15 +15,24 @@ from itertools import product
 import matplotlib.pyplot as plt
 from model import settings
 from filter_NN import filter_NN
+from grid_division_filter import filter
 
-ST = 0.7 # satellite threshold
-NEIGHBOUR_SIZE = 3
+ST = 0.3 # satellite threshold
+NEIGHBOUR_SIZE = 10
 
 def remove_neighbourhood(mask, y, x):
+    flag = False
     for i in range(-NEIGHBOUR_SIZE, NEIGHBOUR_SIZE+1):
         for j in range(-NEIGHBOUR_SIZE, NEIGHBOUR_SIZE+1):
+            if np.linalg.norm(np.array((y-i,x-j))) > NEIGHBOUR_SIZE: continue
             if not (i == j == 0 or 0 > y + i or y + i >= 480 or 0 > x + j or x + j >= 640):
-                mask[y + i, x + j] = 0
+                if mask[y + i, x + j] >= ST: flag = True
+    if flag:
+        for i in range(-NEIGHBOUR_SIZE, NEIGHBOUR_SIZE+1):
+            for j in range(-NEIGHBOUR_SIZE, NEIGHBOUR_SIZE+1):
+                if np.linalg.norm(np.array((y-i,x-j))) > NEIGHBOUR_SIZE: continue
+                if not (i == j == 0 or 0 > y + i or y + i >= 480 or 0 > x + j or x + j >= 640):
+                    mask[y + i, x + j] = 0
     return mask
 
 def evaluate_image(mask, anno):
@@ -55,7 +64,7 @@ def print_images(original_imgs, imgs, columns = 5):
 
 def evaluate(model = None):
     if model is None:
-        model_time = 619527674
+        model_time = 623593485
         model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
         model.compile()
 
@@ -81,22 +90,23 @@ def evaluate(model = None):
             original_imgs.append(img)
         original_imgs = np.stack(original_imgs)
         imgs = []
-        for img in original_imgs:
-            image = filter_image(img)
-            imgs.append(image)
+        # for img in original_imgs:
+        #     image = filter_image(img) / 255.
+        #     imgs.append(image)
+        imgs = filter(original_imgs)
         for i, img in enumerate(imgs):
-            tp, tn, fp, fn = evaluate_image(img / 255., annotations[seq*5+i])
+            tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
             TP += tp
             TN += tn
             FP += fp
             FN += fn
-        imgs_NN = filter_NN(original_imgs, model)
-        for i, img in enumerate(imgs_NN):
-            tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
-            TP_NN += tp
-            TN_NN += tn
-            FP_NN += fp
-            FN_NN += fn
+        # imgs_NN = filter_NN(original_imgs, model)
+        # for i, img in enumerate(imgs_NN):
+        #     tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
+        #     TP_NN += tp
+        #     TN_NN += tn
+        #     FP_NN += fp
+        #     FN_NN += fn
 
     print("Results:")
     print()
