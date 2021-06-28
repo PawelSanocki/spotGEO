@@ -17,7 +17,7 @@ def get_window(img, x, y, i):
 
 def filter_NN(imgs, model = None):
     if model is None:
-        model_time = 623593485
+        model_time = 624290112
         model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
         model.compile()
     to_pred = []

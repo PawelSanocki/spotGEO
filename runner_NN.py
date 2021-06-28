@@ -15,13 +15,14 @@ from itertools import product
 import matplotlib.pyplot as plt
 from model import settings
 from filter_NN import filter_NN
+from grid_division_filter import filter
 
 WINDOW_SIZE = settings.WINDOW_SIZE
-NUM_SEQUENCES = 50
+NUM_SEQUENCES = 100
 
 def run(model = None):
     if model is None:
-        model_time = 623070793
+        model_time = 624290112
         model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
         model.compile()
 
@@ -42,7 +43,7 @@ def run(model = None):
     path = join(Path(__file__).parent.absolute(),"test")
     # path = join(Path(__file__).parent.absolute(),"train")
     results = []
-
+    model = None
     for seq in tqdm(range(NUM_SEQUENCES)):
     # for seq in tqdm(range(len(next(os.walk(path))[1]))):
         imgs = []
@@ -51,11 +52,13 @@ def run(model = None):
             img = cv2.imread(join(path, str(seq+1), str(i+1)) + '.png', cv2.IMREAD_GRAYSCALE)
             original_imgs.append(img)
         original_imgs = np.stack(original_imgs)
-        imgs = filter_NN(original_imgs, model)
+        # imgs = filter_NN(original_imgs, model)
+        imgs, model = filter(original_imgs, model)
+        imgs = np.array(imgs)
+
         original_imgs = original_imgs.astype(np.float) / 255.
-        # print_images(original_imgs, imgs, 2)
         # d = sequence_into_trajectories(imgs, original_imgs, True)
-        d = sequence_into_trajectories(imgs, original_imgs)
+        d = sequence_into_trajectories(imgs, preprocess=False)
         for i in range(5):
             results.append(label_frame(d, seq+1, i+1))
 

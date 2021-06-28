@@ -68,17 +68,18 @@ def get_trained_model():
         model.add(get_augmenter())
         model.add(tf.keras.layers.Conv2D(128, (3, 3), activation='relu'))
         # model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-        model.add(tf.keras.layers.Conv2D(128, (3, 3), activation='relu'))
+        model.add(tf.keras.layers.Conv2D(128, (5, 5), activation='relu'))
         # model.add(tf.keras.layers.MaxPooling2D((2, 2)))
         # model.add(tf.keras.layers.Conv2D(128, (2, 2), activation='relu'))
         model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Dense(512, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.2))
-        model.add(tf.keras.layers.Dense(256, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.2))
+        model.add(tf.keras.layers.Dense(216, activation='relu'))
+        model.add(tf.keras.layers.Dropout(0.1))
+        model.add(tf.keras.layers.Dense(128, activation='relu'))
+        model.add(tf.keras.layers.Dropout(0.1))
         model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
-        # model.compile(optimizer='Adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
-        model.compile(optimizer='Adam', loss=tf.keras.losses.MeanSquaredError(), metrics=[])
+
+        model.compile(optimizer='Adam', loss= tf.keras.losses.binary_crossentropy, metrics=[tfa.metrics.F1Score(num_classes=1, average='micro', threshold=0.4)])
+        # model.compile(optimizer='Adam', loss=tf.keras.losses.MeanSquaredError(), metrics=[tfa.metrics.F1Score(num_classes=1, average='micro', threshold=0.4)])
         return model
 
     def get_model_2():
@@ -104,9 +105,11 @@ def get_trained_model():
             )
         return model
 
-    model = get_model_2()
+    model = get_model()
 
-    model.fit(train_ds, validation_data=val_ds, epochs=2)
+    callback = tf.keras.callbacks.EarlyStopping(monitor='val_F1_metric', patience=2, restore_best_weights=True, mode="max")
+
+    model.fit(train_ds, validation_data=val_ds, epochs=10, callbacks=[callback])
     model.summary()
 
     t = str(int(time.time()) % 1000000000)

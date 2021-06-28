@@ -49,20 +49,10 @@ def filter_image(img):
 
     # img = max_blur_img
 ##################
-    max_blur_img = np.array(myFilters.max_blur(img,7,5))
+    max_blur_img = np.array(myFilters.max_blur(img,13,9))
     img = img.astype(np.int)
     max_blur_img = max_blur_img.astype(np.int)
-    max_blur_img = img - max_blur_img
-
-    amount = 200
-    flat = max_blur_img.flatten()
-    ind = np.argpartition(flat, -amount)[-amount:]
-
-    th = flat[ind].min() - 0
-    max_blur_img[max_blur_img > th] = 255
-    max_blur_img[max_blur_img <= th] = 0
-
-    img = max_blur_img.astype(np.uint8)
+    img = img - max_blur_img
 ######################################## STEP by step removal
     # # find areas of 9 pixels
     # kernel = get_filter(0.3,0.3,0,-0.08,-0.03)
@@ -188,6 +178,17 @@ def filter_image(img):
 ############################################################
     #img = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 7, -5)
 ##############################################################
+
+
+    amount = 1000
+    flat = img.flatten()
+    ind = np.argpartition(flat, -amount)[-amount:]
+
+    th = flat[ind].min() - 0
+    img[img > th] = 255
+    img[img <= th] = 0
+
+    img = img.astype(np.uint8)
     return img
 
 def get_filter(C,I,N=0,O=0,K=0):

@@ -15,7 +15,7 @@ from itertools import product
 import matplotlib.pyplot as plt
 from model import settings
 from filter_NN import filter_NN
-from grid_division_filter import filter
+from grid_division_filter import filter as gdf_filter
 
 ST = 0.3 # satellite threshold
 NEIGHBOUR_SIZE = 10
@@ -39,7 +39,7 @@ def evaluate_image(mask, anno):
     TP, TN, FP, FN = 0,0,0,0
     coords = anno["object_coords"]
     for coord in coords:
-        if mask[int(coord[1]),int(coord[0])] >= ST:
+        if mask[int(coord[1])][int(coord[0])] >= ST:
             mask = remove_neighbourhood(mask, int(coord[1]), int(coord[0]))
             TP += 1
         else:
@@ -90,23 +90,23 @@ def evaluate(model = None):
             original_imgs.append(img)
         original_imgs = np.stack(original_imgs)
         imgs = []
-        # for img in original_imgs:
-        #     image = filter_image(img) / 255.
-        #     imgs.append(image)
-        imgs = filter(original_imgs)
+        for img in original_imgs:
+            image = filter_image(img) / 255.
+            imgs.append(image)
+        # imgs = gdf_filter(original_imgs)[0]
         for i, img in enumerate(imgs):
             tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
             TP += tp
             TN += tn
             FP += fp
             FN += fn
-        # imgs_NN = filter_NN(original_imgs, model)
-        # for i, img in enumerate(imgs_NN):
-        #     tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
-        #     TP_NN += tp
-        #     TN_NN += tn
-        #     FP_NN += fp
-        #     FN_NN += fn
+        imgs_NN = filter_NN(original_imgs, model)
+        for i, img in enumerate(imgs_NN):
+            tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
+            TP_NN += tp
+            TN_NN += tn
+            FP_NN += fp
+            FN_NN += fn
 
     print("Results:")
     print()
@@ -120,6 +120,7 @@ def evaluate(model = None):
     print(precision, recall)
     print("F1")
     print(2*precision*recall / (precision+recall))
+    print(round(2*precision*recall / (precision+recall), 3), round(precision,3), round(recall, 3), sep=' & ')
     print()
 
     print("NN")

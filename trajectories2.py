@@ -230,7 +230,7 @@ def find_stars_direction(imgs: np.ndarray, satellite_th = 0.5, score_threshold =
 
 def sequence_into_trajectories(imgs: np.ndarray, original_images: np.ndarray = None, keep_only_best: bool = False, 
                                 satellite_th = 0.7, score_threshold = 3, margin = 5, directions_similarity = 10, 
-                                trajectory_similarity = 10, max_trajectories = 15) -> dict:
+                                trajectory_similarity = 10, max_trajectories = 15, preprocess = True) -> dict:
     '''
     Return dictionary with directions as keys and list of sequences of points
     :param imgs: 3D, stacked filteres images, values 0-1 so divide by 255.0
@@ -238,7 +238,9 @@ def sequence_into_trajectories(imgs: np.ndarray, original_images: np.ndarray = N
     :param keep_only_best: if true keeps only the direction with the biggest number of trajectories
     :return: dictionary with directions as keys and lists of trajectories as values
     '''
-    imgs_clear = preprocess_images(imgs, satellite_th)
+    if preprocess:
+        imgs_clear = preprocess_images(imgs, satellite_th)
+    else: imgs_clear = imgs.copy()
     points = generate_points(imgs_clear, satellite_th)
     for p in points:
         if len(p) > 150:

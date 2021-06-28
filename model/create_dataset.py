@@ -46,11 +46,10 @@ def create_dataset():
         return img
 
     PATH_TRUE = "model\\dataset_nn\\1\\"
-    for i in tqdm(range(len(ds_true))):
+    for i in tqdm(range(500, len(ds_true))):
         img = get_image(ds_true[i], PATH_TRUE, i)
-        # cv2.imwrite(PATH_TRUE + str(i) + ".png", img)
+        cv2.imwrite(PATH_TRUE + str(i) + ".png", img)
 
-    from filters import filter_image
     from itertools import product
 
     def create_false_sample(true, iter, path):
@@ -68,8 +67,7 @@ def create_dataset():
             if flag: continue
             if filtered_img[y, x] > 0:
                 iter += 1
-                # if iter % 200 > 0:
-                if iter % 50 > 0:
+                if iter % 100 > 0:
                     continue
                 img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
                 cv2.imwrite(PATH_FALSE + str(iter) + ".png", img)
@@ -77,10 +75,9 @@ def create_dataset():
                 # plt.show()
         return iter
 
-    PATH_FALSE = "model\\dataset_nn\\0\\"
     path = "train"
     iter = 0
-    for i in tqdm(range(len(next(os.walk(path))[1]))):
+    for i in tqdm(range(100, len(next(os.walk(path))[1]))):
         for j in range(5):
             img_path = path + "\\" + str(i + 1) + "\\" + str(j + 1) + ".png"
             true = ((int(y), int(x)) for y, x in ds_frames[5*i + j]['object_coords'])
