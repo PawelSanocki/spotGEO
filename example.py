@@ -42,7 +42,7 @@ def example():
         gdf_filtered_sum = gdf_filtered_sum + satellite_marked
         cv2.imshow("gdf", gdf_filtered_sum)
 
-        pipeline_filtered = filter_NN(original_imgs)
+        pipeline_filtered, model_NN = filter_NN(original_imgs, model_NN)
         pipeline_filtered_sum = np.sum(pipeline_filtered, axis = 0)
         pipeline_filtered_sum[pipeline_filtered_sum > 1] = 1
         pipeline_filtered_sum = cv2.cvtColor(np.float32(pipeline_filtered_sum), cv2.COLOR_GRAY2BGR)

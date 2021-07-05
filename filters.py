@@ -245,7 +245,7 @@ def get_objects_coords(sequence, frame):
 def show_marked_image(img, object_coords, name):
     marked_img = cv2.cvtColor(img.copy(), cv2.COLOR_GRAY2BGR)
     for coords in object_coords:
-        print(coords)
+        # print(coords)
         marked_img = cv2.circle(marked_img, coords, 14, (0,0,255), 1)
     cv2.namedWindow(name,cv2.WINDOW_NORMAL)
     cv2.resizeWindow(name,640,480)
@@ -266,10 +266,11 @@ if __name__ == "__main__":
         y += WINDOW_SIZE//2
         to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
         return to_pred, tup
-    model_time = 623070793
+    # model_time = "624991879_928"
+    model_time = "625143927_940"
     model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
     model.compile()
-    for i in range(11,12): # which sequences
+    for i in range(1,12): # which sequences
         for j in range(1,2): # which frames
             object_coords = get_objects_coords(i, j)
             # f, axarr = plt.subplots(1,3)

@@ -23,7 +23,7 @@ class GridSegmentatingModel(tf.keras.Model):
 
         self.flatten = tf.keras.layers.Flatten()
         self.dense_01 = tf.keras.layers.Dense(256, activation='relu')
-        self.dense_02 = tf.keras.layers.Dense(512, activation='relu')
+        self.dense_02 = tf.keras.layers.Dense(256, activation='relu')
         self.dense_03 = tf.keras.layers.Dense((480 // downsampling) * (640 // downsampling), activation='sigmoid')
         self.reshape = tf.keras.layers.Reshape((480 // downsampling, 640 // downsampling, 1))
 
@@ -117,7 +117,7 @@ def train_model(batch_size = 2, cv = 5, kfold = False, epochs=10, model_number =
           best_score = history.history['val_F1_metric'][-1]
           best_model = model
           t = str(int(time.time()) % 1000000000)
-          model.save(init_path+'model/models/grid_filter' + t + '_' + str(best_score))
+          model.save('model/models/grid_filter' + t + '_' + str(best_score))
           print("Saved: model" + t)
 
       t = str(int(time.time()) % 1000000000)
@@ -152,7 +152,7 @@ def filter(imgs, model=None, model_number = None):
     if model is None:
         if model_number is None:
             model = tf.keras.models.load_model(
-                'model/models/grid_filter' + str(623680916), compile=False)
+                'model/models/grid_filter' + str('625428212_433'), compile=False)
         else:
             model = tf.keras.models.load_model(
                 'model/models/grid_filter' + str(model_number), compile=False)
@@ -168,14 +168,16 @@ def filter(imgs, model=None, model_number = None):
         im = cv2.resize(im, (640, 480), interpolation=cv2.INTER_NEAREST)
         new_imgs.append(im)
     return new_imgs, model
+
 if __name__ == "__main__":
     model = None
-    # model = train_model(batch_size = 4, cv = 6, kfold = True)
-    model = train_model(batch_size = 4, epochs=10, model_number = "624801661_10")
+    # model = train_model(batch_size = 1, cv = 6, kfold = True)
+    # model = train_model(batch_size = 4, epochs=10, model_number = "624801661_10")
+    # model = train_model(batch_size = 1, epochs=30)
     img = cv2.imread("train/1/1.png", 0)
     imgs = np.array([img])
-    r = filter(imgs, model, 623774739)[0][0]
+    r, model = filter(imgs, model, '625428212_433')
     import matplotlib.pyplot as plt
-    plt.imshow(r.astype(float))
+    plt.imshow(r[0 ].astype(float))
     plt.show()
 

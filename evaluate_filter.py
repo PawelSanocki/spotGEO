@@ -64,7 +64,7 @@ def print_images(original_imgs, imgs, columns = 5):
 
 def evaluate(model = None):
     if model is None:
-        model_time = 623593485
+        model_time = "625143927_940"
         model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
         model.compile()
 
@@ -100,7 +100,7 @@ def evaluate(model = None):
             TN += tn
             FP += fp
             FN += fn
-        imgs_NN = filter_NN(original_imgs, model)
+        imgs_NN, model = filter_NN(original_imgs, model)
         for i, img in enumerate(imgs_NN):
             tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
             TP_NN += tp

@@ -37,7 +37,7 @@ def get_trained_model():
 
     def preprocess(image, label):
         image = tf.cast(image, tf.float32) / 255.
-        return image, label - 0.0001
+        return image, label * 0.9999
 
     dataset = dataset.map(preprocess)
 
@@ -66,16 +66,14 @@ def get_trained_model():
     def get_model():
         model = tf.keras.Sequential()
         model.add(get_augmenter())
-        model.add(tf.keras.layers.Conv2D(128, (3, 3), activation='relu'))
-        # model.add(tf.keras.layers.MaxPooling2D((2, 2)))
         model.add(tf.keras.layers.Conv2D(128, (5, 5), activation='relu'))
-        # model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-        # model.add(tf.keras.layers.Conv2D(128, (2, 2), activation='relu'))
+        model.add(tf.keras.layers.Conv2D(128, (3, 3), activation='relu'))
+        model.add(tf.keras.layers.Conv2D(128, (2, 2), activation='relu'))
         model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Dense(216, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.1))
-        model.add(tf.keras.layers.Dense(128, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.1))
+        model.add(tf.keras.layers.Dense(512, activation='relu'))
+        model.add(tf.keras.layers.Dropout(0.2))
+        model.add(tf.keras.layers.Dense(64, activation='relu'))
+        model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
 
         model.compile(optimizer='Adam', loss= tf.keras.losses.binary_crossentropy, metrics=[tfa.metrics.F1Score(num_classes=1, average='micro', threshold=0.4)])
@@ -107,14 +105,15 @@ def get_trained_model():
 
     model = get_model()
 
-    callback = tf.keras.callbacks.EarlyStopping(monitor='val_F1_metric', patience=2, restore_best_weights=True, mode="max")
+    callback = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', patience=5, restore_best_weights=True, mode="max")
 
-    model.fit(train_ds, validation_data=val_ds, epochs=10, callbacks=[callback])
+    hist = model.fit(train_ds, validation_data=val_ds, epochs=60, callbacks=[callback])
     model.summary()
 
     t = str(int(time.time()) % 1000000000)
     model.save('model/models/model' + t)
-    print("Saved: model" + t)
+    model.save('model/models/model' + t + '_' + str(int(1000*hist.history['val_f1_score'][-1])))
+    print("Saved: model" + t + '_' + str(int(1000*hist.history['val_f1_score'][-1])))
 
     acc = model.evaluate(test_ds, verbose=0, return_dict=True)
     print(acc)

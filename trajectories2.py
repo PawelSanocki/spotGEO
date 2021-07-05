@@ -25,10 +25,8 @@ def remove_blobs(img, satellite_th):
     :returns: stacked images in the sequence, shape (5,480,640)
     '''
     reg, mask = cv2.threshold(img, satellite_th, 1, cv2.THRESH_BINARY)
-    # cv2.imshow("1", img)
-    # cv2.waitKey()
     mask = np.uint8(mask * 255)
-    contours, hierarchy = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) # comment img
+    contours, hierarchy = cv2.findContours(mask,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE) # comment img
     new_img = np.zeros_like(img)
     for c in contours:
         M = cv2.moments(c)
@@ -63,7 +61,7 @@ def get_sequence(path: str):
     imgs = []
     for i in range(5):
         imgs.append(cv2.imread(join(path, str(i+1)) + '.png', cv2.IMREAD_GRAYSCALE))
-        imgs[i] = imgs[i] / 255
+        imgs[i] = imgs[i]
     imgs = np.stack(imgs)
     return imgs
 
@@ -71,6 +69,7 @@ def generate_points(imgs, satellite_th):
     '''
     imgs - matrix of shape (5, 480, 640)
     '''
+    
     points = []
     for t in range(5): # might be range(4) or range(5), speedup or more points to test
         points_in_frame = []
@@ -182,14 +181,14 @@ def clear_trajectories(trajectories: dict, star_direction: tuple = None, keep_on
         worst_score = 5.1
         for k in clean_traj.keys():
             number_of_trajectories += len(clean_traj[k])
-            for t in clean_traj[k]:
+            for i, t in enumerate(clean_traj[k]):
                 if t[-1] < worst_score:
                     worst_key = k
                     worst_score = t[-1]
-                    worst_trajectory = t
+                    worst_trajectory = i
         if number_of_trajectories <= max_trajectories:
             break
-        clean_traj[worst_key].remove(worst_trajectory)
+        clean_traj[worst_key].pop(worst_trajectory)
     return clean_traj
 
 def find_stars_direction(imgs: np.ndarray, satellite_th = 0.5, score_threshold = 3, margin = 5) -> tuple:
@@ -211,7 +210,7 @@ def find_stars_direction(imgs: np.ndarray, satellite_th = 0.5, score_threshold =
         #img = cv2.adaptiveThreshold(np.uint8(img*255), 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 51, 1,) / 255.0
     points = generate_points(imgs, satellite_th)
     for p in points:
-        if len(p) > 50:
+        if len(p) > 150:
             return direction
     # for i in range(5):
     #     cv2.imshow(str(i),imgs[i])
@@ -241,6 +240,10 @@ def sequence_into_trajectories(imgs: np.ndarray, original_images: np.ndarray = N
     if preprocess:
         imgs_clear = preprocess_images(imgs, satellite_th)
     else: imgs_clear = imgs.copy()
+    amount = 150
+    flat = imgs.flatten()
+    ind = np.argpartition(flat, -amount)[-amount:]
+    satellite_th = max(flat[ind].min(), satellite_th)
     points = generate_points(imgs_clear, satellite_th)
     for p in points:
         if len(p) > 150:
@@ -256,72 +259,25 @@ def sequence_into_trajectories(imgs: np.ndarray, original_images: np.ndarray = N
 
 if __name__ == "__main__":
     task_number = 1
-    path = join(Path(__file__).parent.absolute(),"groundtruth",str(task_number))
+    path = join(Path(__file__).parent.absolute(),"train",str(task_number))
     imgs = get_sequence(path)
-    imgs = add_noise(imgs, 10)
-    img = merge_images(imgs)
-    start = timeit.default_timer()
+    # imgs = add_noise(imgs, 10)
+    # img = merge_images(imgs)
+    from filter_NN import filter_NN
+    # cv2.imshow("original", imgs[0])
+    imgs, model = filter_NN(imgs)
+    # cv2.imshow("filtered", imgs[0] * 255)
 
-    directions = sequence_into_trajectories(imgs,keep_only_best=True)
+    satellite_th = 0.5
+    imgs_clear = preprocess_images(imgs, satellite_th)
+    # cv2.imshow("blobs cleared", imgs_clear[0] * 255)
+    # cv2.waitKey()
 
-    stop = timeit.default_timer()
-    print('Time: ', stop - start) 
-    print("MARGIN: ", 5)
-    print("SCORE_THRESHOLD: ", 4)
-    #print(directions)
-    for i in directions.keys():
-        print(i)
-        #print(len(directions[i]))
-        for satellite_trajectory in directions[i]:
-            print(*satellite_trajectory)
-        print()
-
-    gts = get_sequence(path)
-    gt = merge_images(gts)
-
-    rgb_img = cv2.merge([img,img,img])
-    def in_directory(d:dict, y, x):
-        for k in d.keys():
-            l = d[k]
-            for traj in l:
-                for p in range(len(traj)-1):
-                    if traj[p][1] == x and traj[p][2] == y:
-                        return True
-        return False
-    size = 6
-    thickness = 1
-    for x in range(gt.shape[0]):
-        for y in range(gt.shape[1]):
-            if gt[x,y] > 0 and in_directory(directions, x, y):
-                cv2.circle(rgb_img,(y,x), size, (0, 255, 0), thickness)
-            elif gt[x,y] > 0:
-                cv2.circle(rgb_img,(y,x), size, (0, 0, 255),thickness)
-            elif gt[x,y] == 0 and in_directory(directions, x, y):
-                cv2.circle(rgb_img,(y,x), size, (255, 50, 0),thickness)
-    cv2.namedWindow('',cv2.WINDOW_NORMAL)
-    cv2.imshow('', rgb_img)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    points = generate_points(imgs_clear, satellite_th)
+    trajectories = calculate_direction(points, imgs, score_threshold=3, margin=10)
+    print(len(trajectories))
+    trajectories = clear_trajectories(trajectories, keep_only_best=False, directions_similarity = 10, trajectory_similarity = 10, max_trajectories=15)
+    print((trajectories.values()))
+    from dict_to_json import label_frame
+    print(label_frame(trajectories, 1, 1))
     
-    # for i in range(3):
-    #     cv2.namedWindow(str(i),cv2.WINDOW_NORMAL)
-    #     cv2.imshow(str(i), imgs[i*2])
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
-
-    # plt.figure(num=None, figsize=(14, 4), dpi=128, facecolor='w', edgecolor='k')
-    # for i in range(3):
-    #     plt.subplot(1, 3, i+1)
-    #     plt.imshow(imgs[i*2],cmap='gray')
-    # plt.show()
-
-    # path = join(Path(__file__).parent.absolute(),"train",str(task_number))
-    # imgs = get_sequence(path)
-
-    # print(find_stars_direction(imgs))
-    # cv2.namedWindow("1",cv2.WINDOW_NORMAL)
-    # cv2.imshow("1", imgs[0])
-    # cv2.namedWindow("2",cv2.WINDOW_NORMAL)
-    # cv2.imshow("2", imgs[1])
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()

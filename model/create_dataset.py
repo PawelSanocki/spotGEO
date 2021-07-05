@@ -8,6 +8,7 @@ import os.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from filters import filter_image
 from model import settings
+import os, shutil
 
 SEED = settings.SEED
 WINDOW_SIZE = settings.WINDOW_SIZE
@@ -45,10 +46,10 @@ def create_dataset():
             it += 1
         return img
 
-    PATH_TRUE = "model\\dataset_nn\\1\\"
-    for i in tqdm(range(500, len(ds_true))):
-        img = get_image(ds_true[i], PATH_TRUE, i)
-        cv2.imwrite(PATH_TRUE + str(i) + ".png", img)
+    # PATH_TRUE = "model\\dataset_nn\\1\\"
+    # for i in tqdm(range(500, len(ds_true))):
+    #     img = get_image(ds_true[i], PATH_TRUE, i)
+    #     cv2.imwrite(PATH_TRUE + str(i) + ".png", img)
 
     from itertools import product
 
@@ -67,14 +68,20 @@ def create_dataset():
             if flag: continue
             if filtered_img[y, x] > 0:
                 iter += 1
-                if iter % 100 > 0:
+                if iter % 30 > 0:
                     continue
                 img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
                 cv2.imwrite(PATH_FALSE + str(iter) + ".png", img)
                 # plt.imshow(img)
                 # plt.show()
         return iter
-
+    PATH_FALSE = "model\\dataset_nn\\0\\"
+    for filename in os.listdir(PATH_FALSE):
+        file_path = os.path.join(PATH_FALSE, filename)
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
     path = "train"
     iter = 0
     for i in tqdm(range(100, len(next(os.walk(path))[1]))):
