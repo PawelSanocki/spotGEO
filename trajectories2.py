@@ -89,7 +89,7 @@ def calculate_direction(points, imgs, score_threshold, margin):
     '''
     directions = dict()
     for i in range(4):
-        for j in range(i+1, 5): # might be in range(i+1, 4) for speedup as we do not need to find just two points, range(i+1, 5) if we need better results
+        for j in range(i+1, 5):
             for p1 in points[i]:
                 for p2 in points[j]:
                     trajectory, score, direction = predict_points(p1, p2, imgs, margin)
@@ -240,10 +240,10 @@ def sequence_into_trajectories(imgs: np.ndarray, original_images: np.ndarray = N
     if preprocess:
         imgs_clear = preprocess_images(imgs, satellite_th)
     else: imgs_clear = imgs.copy()
-    amount = 150
-    flat = imgs.flatten()
-    ind = np.argpartition(flat, -amount)[-amount:]
-    satellite_th = max(flat[ind].min(), satellite_th)
+    # amount = 150
+    # flat = imgs.flatten()
+    # ind = np.argpartition(flat, -amount)[-amount:]
+    # satellite_th = max(flat[ind].min(), satellite_th)
     points = generate_points(imgs_clear, satellite_th)
     for p in points:
         if len(p) > 150:

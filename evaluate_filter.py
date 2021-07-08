@@ -63,10 +63,10 @@ def print_images(original_imgs, imgs, columns = 5):
         plt.show()
 
 def evaluate(model = None):
-    if model is None:
-        model_time = "625143927_940"
-        model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
-        model.compile()
+    # if model is None:
+    #     model_time = "625143927_940"
+    #     model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
+    #     model.compile()
 
     with open("train_anno.json", 'r') as f:
         annotations = json.load(f)
@@ -81,7 +81,7 @@ def evaluate(model = None):
     TN_NN = 0
     FP_NN = 0
     FN_NN = 0
-
+    model = None
     for seq in tqdm(range(100)):
     # for seq in tqdm(range(len(next(os.walk(path))[1]))):
         original_imgs = []
@@ -93,7 +93,7 @@ def evaluate(model = None):
         for img in original_imgs:
             image = filter_image(img) / 255.
             imgs.append(image)
-        # imgs = gdf_filter(original_imgs)[0]
+        # imgs, model = gdf_filter(original_imgs)
         for i, img in enumerate(imgs):
             tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
             TP += tp

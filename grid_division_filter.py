@@ -167,6 +167,7 @@ def filter(imgs, model=None, model_number = None):
     for im in r:
         im = cv2.resize(im, (640, 480), interpolation=cv2.INTER_NEAREST)
         new_imgs.append(im)
+    new_imgs = np.array(new_imgs)
     return new_imgs, model
 
 if __name__ == "__main__":

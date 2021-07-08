@@ -40,7 +40,7 @@ def run(model = None):
     results = []
     for seq in tqdm(range(NUM_SEQUENCES)):
     # for seq in tqdm(range(len(next(os.walk(path))[1]))):
-        imgs = []
+        # imgs = []
         original_imgs = []
         for i in range(5):
             img = cv2.imread(join(path, str(seq+1), str(i+1)) + '.png', cv2.IMREAD_GRAYSCALE)
@@ -51,7 +51,7 @@ def run(model = None):
 
         # original_imgs = original_imgs.astype(np.float) / 255.
         # d = sequence_into_trajectories(imgs, original_imgs, True)
-        d = sequence_into_trajectories(imgs, preprocess=True, satellite_th=0.4, score_threshold=2.1)
+        d = sequence_into_trajectories(imgs, preprocess=False, satellite_th=0.4, score_threshold=2.1, keep_only_best=True, trajectory_similarity = 5)
         for i in range(5):
             results.append(label_frame(d, seq+1, i+1))
 
