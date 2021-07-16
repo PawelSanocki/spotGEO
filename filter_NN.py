@@ -17,7 +17,10 @@ def get_window(img, x, y, i):
 
 def filter_NN(imgs, model = None):
     if model is None:
-        model_time = '625672564_911'#"625143927_940"
+        model_time = '626144688_942'
+        model_time = "626107288_884"
+        model_time = '626256363_943'
+        model_time = '625143927_940'
         model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
         model.compile()
     to_pred = []

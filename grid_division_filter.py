@@ -152,7 +152,7 @@ def filter(imgs, model=None, model_number = None):
     if model is None:
         if model_number is None:
             model = tf.keras.models.load_model(
-                'model/models/grid_filter' + str('625428212_433'), compile=False)
+                'model/models/grid_filter' + str('626084041_462'), compile=False)
         else:
             model = tf.keras.models.load_model(
                 'model/models/grid_filter' + str(model_number), compile=False)
@@ -177,8 +177,8 @@ if __name__ == "__main__":
     # model = train_model(batch_size = 1, epochs=30)
     img = cv2.imread("train/1/1.png", 0)
     imgs = np.array([img])
-    r, model = filter(imgs, model, '625428212_433')
+    r, model = filter(imgs, model, '625738187_491')
     import matplotlib.pyplot as plt
-    plt.imshow(r[0 ].astype(float))
+    plt.imshow(r[0].astype(float))
     plt.show()
 

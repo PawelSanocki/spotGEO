@@ -24,7 +24,8 @@ def example():
         
     path = join(Path(__file__).parent.absolute(),"test")
     gdf_model = None
-    for seq in range(0, 20):
+    model_NN = None
+    for seq in range(0, 5):
         original_imgs = []
         object_coords = []
         for frame in range(5):

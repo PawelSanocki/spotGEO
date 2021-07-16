@@ -51,13 +51,6 @@ def get_trained_model():
     val_ds = test_ds.take(val_size)
     test_ds = test_ds.skip(val_size)
 
-    # def print_dataset(name, dataset):
-    #     elems = [1 for v in dataset]
-    #     print("Dataset {} contains {} elements :".format(name, len(elems)))
-    # print_dataset("train",train_ds)
-    # print_dataset("val",val_ds)
-    # print_dataset("test",test_ds)
-
     def get_augmenter():
         augmenter = tf.keras.Sequential()
         augmenter.add(tf.keras.layers.experimental.preprocessing.RandomFlip(input_shape = (WINDOW_SIZE,WINDOW_SIZE,1)))
@@ -76,8 +69,7 @@ def get_trained_model():
         model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
 
-        model.compile(optimizer='Adam', loss= tf.keras.losses.binary_crossentropy, metrics=[tfa.metrics.F1Score(num_classes=1, average='micro', threshold=0.4)])
-        # model.compile(optimizer='Adam', loss=tf.keras.losses.MeanSquaredError(), metrics=[tfa.metrics.F1Score(num_classes=1, average='micro', threshold=0.4)])
+        model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss=tf.keras.losses.binary_crossentropy, metrics=[tfa.metrics.F1Score(num_classes=1, average='micro', threshold=0.4)])
         return model
 
     def get_model_2():
@@ -103,11 +95,11 @@ def get_trained_model():
             )
         return model
 
-    model = get_model()
+    model = get_model_2()
 
-    callback = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', patience=5, restore_best_weights=True, mode="max")
+    callback = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', patience=20, restore_best_weights=True, mode="max")
 
-    hist = model.fit(train_ds, validation_data=val_ds, epochs=60, callbacks=[callback])
+    hist = model.fit(train_ds, validation_data=val_ds, epochs=200, callbacks=[callback])
     model.summary()
 
     t = str(int(time.time()) % 1000000000)

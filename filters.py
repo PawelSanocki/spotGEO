@@ -24,27 +24,28 @@ I = INNER
 C = CENTER
 
 def filter_image(img):
-    # max_blur_img = np.array(myFilters.max_blur(img,13,9))
-    # img = img.astype(np.int)
-    # max_blur_img = max_blur_img.astype(np.int)
-    # img = img - max_blur_img
+    max_blur_img = np.array(myFilters.max_blur(img,13,9))
+    img = img.astype(np.int)
+    max_blur_img = max_blur_img.astype(np.int)
+    img = img - max_blur_img
 #########################
     # kernel = get_filter(C,I,N,O)
     # kernel = gkern(7, 1) - 0.01
     # img = cv2.filter2D(img, 8, kernel, img)
 #########################
-    img = template_matching_filter(img, num_matches=20, matching_method=1, conclusion_method='median')
+    # img = template_matching_filter(img, num_matches=20, matching_method=1, conclusion_method='median')
 #########################
+    new_image = np.zeros_like(img)
     amount = 1000
     flat = img.flatten()
     ind = np.argpartition(flat, -amount)[-amount:]
 
     th = flat[ind].min() - 1
-    img[img > th] = 255
+    new_image[img > th] = 255
     img[img <= th] = 0
 
-    img = img.astype(np.uint8)
-    return img
+    new_image = new_image.astype(np.uint8)
+    return new_image
 
 def get_filter(C,I,N=0,O=0,K=0):
     kernel = np.array([[K,K,K,K,K,K,K,K,K],
@@ -96,21 +97,26 @@ def max_blur(image, size, mask_size = 3):
 def template_matching_filter(img, num_matches = 10, matching_method = 0, conclusion_method = 'max'):
     methods = [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
             cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
-    templates = []
+    results = []
     path = "model/dataset_nn/1/"
     n_files = len(next(os.walk(path))[2])
-    rands = np.random.randint(n_files // 2, n_files - 1, num_matches)
+    rands = np.random.randint(n_files * 3 // 4, n_files, num_matches)
     for i in range(num_matches):
-        t = cv2.imread(path + str(rands[i])+ ".png", cv2.IMREAD_GRAYSCALE)
-        templates.append(t)
-    results = []
-    for template in templates:
+        template = cv2.imread(path + str(rands[i])+ ".png", cv2.IMREAD_GRAYSCALE)
         templated = cv2.matchTemplate(img.copy(), template, methods[matching_method])
         results.append(templated)
     results = np.array(results)
-    maxi = results.max()
-    mini = results.min()
-    results = 255 * (results - mini) / (maxi - mini) 
+    try:
+        maxi = np.max(results)
+        mini = np.min(results)
+    except:
+        print(rands)
+        print(results.shape)
+        exit()
+
+    if maxi == mini: maxi += 1
+    results = 255 * (results - mini) / (maxi - mini)
+
     if methods[matching_method] == cv2.TM_SQDIFF or methods[matching_method] == cv2.TM_SQDIFF_NORMED:
         results = np.abs(255 - results)
     if conclusion_method == 'max':
@@ -119,7 +125,8 @@ def template_matching_filter(img, num_matches = 10, matching_method = 0, conclus
         results = np.median(results, axis = 0)
     elif conclusion_method == 'percentile':
         results = np.percentile(results, 80, axis=0)
-    results = np.pad(results, templates[0].shape[0]//2)
+    
+    results = np.pad(results, template.shape[0]//2)
     return results
 
 
@@ -158,8 +165,8 @@ if __name__ == "__main__":
         y += WINDOW_SIZE//2
         to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
         return to_pred, tup
-    # model_time = "624991879_928"
-    model_time = "625143927_940"
+    model_time = "626107288_884"
+    # model_time = "626144688_942"
     model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
     model.compile()
     for i in range(1,2): # which sequences
@@ -183,7 +190,7 @@ if __name__ == "__main__":
             cv2.resizeWindow("filtered",640,480)
             cv2.imshow("filtered", img)
             show_marked_image(img, object_coords, "marked_filtered")
-
+            cv2.waitKey()
             to_pred = []
             coords = []
             for x, y in product(range(img.shape[0]),range(img.shape[1])):

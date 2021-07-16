@@ -42,18 +42,29 @@ def create_dataset():
             size = WINDOW_SIZE // 2
             image = np.pad(image, size, mode = 'reflect')
             img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
-            cv2.imwrite(PATH_TRUE + str(i * 5 + it) + ".png", img)
+            cv2.imwrite(PATH_TRUE + str(i) + "_" + str(it) + ".png", img)
             it += 1
-        return img
+        pass
 
-    # PATH_TRUE = "model\\dataset_nn\\1\\"
-    # for i in tqdm(range(500, len(ds_true))):
-    #     img = get_image(ds_true[i], PATH_TRUE, i)
-    #     cv2.imwrite(PATH_TRUE + str(i) + ".png", img)
+    PATH_TRUE = "model\\dataset_nn\\1\\"
+    for filename in os.listdir(PATH_TRUE):
+        file_path = os.path.join(PATH_TRUE, filename)
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+    for i in tqdm(range(500, len(ds_true))):
+        get_image(ds_true[i], PATH_TRUE, i)
 
     from itertools import product
 
-    def create_false_sample(true, iter, path):
+    def create_false_sample(true: list, iter: int, path: str) -> int:
+        '''
+        @param true - true satellites placement
+        @param iter - current positive sample from initial image filtering step
+        @param path - path to the image
+        @returns - number of the next sample, the iter value
+        '''
         PATH_FALSE = "model\\dataset_nn\\0\\"
         image = cv2.imread(path, 0)
         filtered_img = filter_image(image)
@@ -72,9 +83,8 @@ def create_dataset():
                     continue
                 img = image[y - size + size:y + size+1+ size, x - size+ size:x + size+1+ size] # add size everywhere due to padding
                 cv2.imwrite(PATH_FALSE + str(iter) + ".png", img)
-                # plt.imshow(img)
-                # plt.show()
         return iter
+
     PATH_FALSE = "model\\dataset_nn\\0\\"
     for filename in os.listdir(PATH_FALSE):
         file_path = os.path.join(PATH_FALSE, filename)

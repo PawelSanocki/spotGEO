@@ -93,7 +93,7 @@ def evaluate(model = None):
         for img in original_imgs:
             image = filter_image(img) / 255.
             imgs.append(image)
-        # imgs, model = gdf_filter(original_imgs)
+        # imgs, model = gdf_filter(original_imgs, model)
         for i, img in enumerate(imgs):
             tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
             TP += tp
@@ -132,6 +132,7 @@ def evaluate(model = None):
     print(precision, recall)
     print("F1")
     print(2*precision*recall / (precision+recall))
+    print(round(2*precision*recall / (precision+recall), 3), round(precision,3), round(recall, 3), sep=' & ')
 
 if __name__ == "__main__":
     evaluate()

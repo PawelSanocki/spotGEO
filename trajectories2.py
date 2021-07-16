@@ -36,7 +36,7 @@ def remove_blobs(img, satellite_th):
         else:
             cY = int(M["m10"] / M["m00"])
             cX = int(M["m01"] / M["m00"])
-        mask = np.zeros_like(img)
+        mask = np.zeros_like(img, np.uint8)
         mask = cv2.drawContours(mask, [c], -1, 255, -1)
         _, max_val, _, _ = cv2.minMaxLoc(img, mask = mask)
         new_img[cX,cY] = max_val
