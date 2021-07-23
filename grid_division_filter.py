@@ -156,7 +156,7 @@ def filter(imgs, model=None, model_number = None):
         else:
             model = tf.keras.models.load_model(
                 'model/models/grid_filter' + str(model_number), compile=False)
-    model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+        model.compile(optimizer=tf.keras.optimizers.RMSprop(),
                   loss=tf.keras.losses.binary_crossentropy, metrics=[F1_metric])
 
     imgs = np.expand_dims(imgs.copy(), axis=-1)

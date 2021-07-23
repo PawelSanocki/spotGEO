@@ -21,6 +21,7 @@ def filter_NN(imgs, model = None):
         model_time = "626107288_884"
         model_time = '626256363_943'
         model_time = '625143927_940'
+        model_time = '626984740_961'
         model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
         model.compile()
     to_pred = []

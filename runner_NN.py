@@ -36,12 +36,14 @@ def print_images(original_imgs, imgs, columns=5):
     plt.show()
 
 
-def run(model=None):
+def run(model=None, satellite_th=0.1, score_threshold=1.1,
+                                       keep_only_best=True, trajectory_similarity=15, 
+                                       margin = 5, directions_similarity=5, it = 0, GDF = True):
     path = join(Path(__file__).parent.absolute(), "train")
-    # path = join(Path(__file__).parent.absolute(),"train")
+    # path = join(Path(__file__).parent.absolute(),"test")
     results = []
     for seq in tqdm(range(NUM_SEQUENCES)):
-        # for seq in tqdm(range(len(next(os.walk(path))[1]))):
+    # for seq in tqdm(range(len(next(os.walk(path))[1]))):
         # imgs = []
         original_imgs = []
         for i in range(5):
@@ -50,15 +52,18 @@ def run(model=None):
             original_imgs.append(img)
         original_imgs = np.stack(original_imgs)
         
-
-        # imgs, model = filter_NN(original_imgs, model)
-        # original_imgs = original_imgs.astype(np.float) / 255.
-        # d = sequence_into_trajectories(imgs, original_imgs, preprocess=True, satellite_th=0.4, score_threshold=2.5, keep_only_best=True, trajectory_similarity=5, )
-
-        imgs, model = gdf(original_imgs, model)
-        original_imgs = original_imgs.astype(np.float) / 255.
-        d = sequence_into_trajectories(imgs, satellite_th=0.3, score_threshold=1.,
-                                       keep_only_best=True, trajectory_similarity=5)
+        if GDF == False:
+            imgs, model = filter_NN(original_imgs, model)
+            original_imgs = original_imgs.astype(np.float) / 255.
+            d = sequence_into_trajectories(imgs, satellite_th=satellite_th, score_threshold=score_threshold,
+                                        keep_only_best=keep_only_best, trajectory_similarity=trajectory_similarity, 
+                                        margin = margin, directions_similarity=directions_similarity)
+        else:
+            imgs, model = gdf(original_imgs, model)
+            original_imgs = original_imgs.astype(np.float) / 255.
+            d = sequence_into_trajectories(imgs, satellite_th=satellite_th, score_threshold=score_threshold,
+                                        keep_only_best=keep_only_best, trajectory_similarity=trajectory_similarity, 
+                                        margin = margin, directions_similarity=directions_similarity)
 
         for i in range(5):
             results.append(label_frame(d, seq+1, i+1))
@@ -74,12 +79,33 @@ def run(model=None):
             'submission.json', 'train_anno.json')
         print('precision, recall, F1, mse')
         print(precision, recall, F1, mse)
+        print(it, satellite_th, score_threshold, keep_only_best, trajectory_similarity, directions_similarity, margin, round(F1, 3), round(recall,3), round(precision, 3), round(mse, 0), sep=' & ')
     else:
         precision, recall, F1, mse = validation.compute_score(
             'submission.json', 'test_anno.json')
         print('precision, recall, F1, mse')
         print(precision, recall, F1, mse)
+        print(round(F1, 3), round(recall,3), round(precision, 3), round(mse, 0), sep=' & ')
 
 
 if __name__ == "__main__":
-    run()
+    STs = [0.95]
+    TTs = [2.5]
+    keep_bests = [1]
+    TSs = [15]
+    Ms = [5]
+    DSs = [5]
+    i = 1
+    GDF = False
+    for ST in STs:
+        for TT in TTs:
+            for keep_best in keep_bests:
+                for TS in TSs:
+                    for M in Ms:
+                        for DS in DSs:
+                            run(None, ST,TT,keep_best, TS,M, DS, i, GDF)
+                            i+=1
+
+
+
+    

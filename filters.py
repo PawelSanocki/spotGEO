@@ -36,7 +36,7 @@ def filter_image(img):
     # img = template_matching_filter(img, num_matches=20, matching_method=1, conclusion_method='median')
 #########################
     new_image = np.zeros_like(img)
-    amount = 1000
+    amount = 200
     flat = img.flatten()
     ind = np.argpartition(flat, -amount)[-amount:]
 
@@ -65,34 +65,6 @@ def gkern(size=5, nsig=3):
     kern1d = np.diff(st.norm.cdf(x))
     kern2d = np.outer(kern1d, kern1d)
     return kern2d/kern2d.sum()
-
-def remove_noise(img: np.ndarray, regions: List, low_thresh: int, high_thresh: int) -> np.ndarray:
-    """
-    Function to remove regions that were too small, according to regionprops method
-    :param img (np.ndarray): image which will be proceded later. From this picture noise is removed
-    :param regions (List): List of regions found by regionprops
-    :param thresh (int): Minimum size of a region. Smaller that this will be removed
-    :return image with removed regions smaller than thresh area
-    """
-    img_zeros = np.zeros((IMAGE_HEIGHT, IMAGE_WIDTH))
-    for props in regions:
-        if high_thresh > props.area > low_thresh:
-            min_row,min_col,max_row,max_col = props.bbox
-            img_zeros[min_row: max_row + 1, min_col: max_col + 1] = 255
-    img[img_zeros != 255] = 0
-    return img
-
-def max_blur(image, size, mask_size = 3):
-    imgs = []
-    for i in range(size):
-        for j in range(size):
-            if i < mask_size//2 or j < mask_size//2 or i > size-mask_size//2-1 or j > size-mask_size//2-1:
-                kernel = np.zeros((size,size))
-                kernel[i,j] = 1
-                imgs.append(cv2.filter2D(image,8,kernel))
-    img = np.stack(imgs,-1)
-    img = np.max(img,-1)
-    return img
 
 def template_matching_filter(img, num_matches = 10, matching_method = 0, conclusion_method = 'max'):
     methods = [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
@@ -129,11 +101,8 @@ def template_matching_filter(img, num_matches = 10, matching_method = 0, conclus
     results = np.pad(results, template.shape[0]//2)
     return results
 
-
-
 def get_objects_coords(sequence, frame):
     train_anno_path = "train_anno.json"
-    images_path = "train"
 
     with open(train_anno_path, 'r') as f:
         anno = json.load(f)
