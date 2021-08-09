@@ -173,7 +173,7 @@ def filter(imgs, model=None, model_number = None):
 if __name__ == "__main__":
     model = None
     # model = train_model(batch_size = 1, cv = 6, kfold = True)
-    # model = train_model(batch_size = 4, epochs=10, model_number = "624801661_10")
+    model = train_model(batch_size = 2, epochs=10)
     # model = train_model(batch_size = 1, epochs=30)
     img = cv2.imread("train/1/1.png", 0)
     imgs = np.array([img])

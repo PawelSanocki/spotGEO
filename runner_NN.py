@@ -17,9 +17,11 @@ from model import settings
 from filter_NN import filter_NN
 from grid_division_filter import filter as gdf
 
+
+segmentation = True
 WINDOW_SIZE = settings.WINDOW_SIZE
 NUM_SEQUENCES = 100
-
+folder = "train"
 
 def print_images(original_imgs, imgs, columns=5):
     fig = plt.figure(figsize=(14, 8))
@@ -39,8 +41,7 @@ def print_images(original_imgs, imgs, columns=5):
 def run(model=None, satellite_th=0.1, score_threshold=1.1,
                                        keep_only_best=True, trajectory_similarity=15, 
                                        margin = 5, directions_similarity=5, it = 0, GDF = True):
-    path = join(Path(__file__).parent.absolute(), "train")
-    # path = join(Path(__file__).parent.absolute(),"test")
+    path = join(Path(__file__).parent.absolute(), folder)
     results = []
     for seq in tqdm(range(NUM_SEQUENCES)):
     # for seq in tqdm(range(len(next(os.walk(path))[1]))):
@@ -89,14 +90,14 @@ def run(model=None, satellite_th=0.1, score_threshold=1.1,
 
 
 if __name__ == "__main__":
-    STs = [0.95]
-    TTs = [2.5]
+    STs = [0.9]
+    TTs = [4.1]
     keep_bests = [1]
     TSs = [15]
     Ms = [5]
     DSs = [5]
     i = 1
-    GDF = False
+    GDF = segmentation
     for ST in STs:
         for TT in TTs:
             for keep_best in keep_bests:

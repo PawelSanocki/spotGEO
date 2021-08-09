@@ -17,7 +17,7 @@ from model import settings
 from filter_NN import filter_NN
 from grid_division_filter import filter as gdf_filter
 
-ST = 0.3 # satellite threshold
+ST = 0.5 # satellite threshold
 NEIGHBOUR_SIZE = 10
 
 def remove_neighbourhood(mask, y, x):
@@ -100,13 +100,13 @@ def evaluate(model = None):
             TN += tn
             FP += fp
             FN += fn
-        # imgs_NN, model = filter_NN(original_imgs, model)
-        # for i, img in enumerate(imgs_NN):
-        #     tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
-        #     TP_NN += tp
-        #     TN_NN += tn
-        #     FP_NN += fp
-        #     FN_NN += fn
+        imgs_NN, model = filter_NN(original_imgs, model)
+        for i, img in enumerate(imgs_NN):
+            tp, tn, fp, fn = evaluate_image(img, annotations[seq*5+i])
+            TP_NN += tp
+            TN_NN += tn
+            FP_NN += fp
+            FN_NN += fn
 
     print("Results:")
     print()

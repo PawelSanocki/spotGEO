@@ -191,7 +191,7 @@ def validate_json(labels,variable_size):
 
 # This script can run from the command line: python my_anno.json true_labels.json
 if __name__ == '__main__':
-    precision, recall, F1, mse = compute_score('submission.json', 'train_anno.json')
+    precision, recall, F1, mse = compute_score('annotation.json', 'train_anno.json')
     print('precision, recall, F1, mse')
     print(precision, recall, F1, mse)
     # if len(sys.argv)  not in [2, 3]:

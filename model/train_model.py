@@ -95,11 +95,11 @@ def get_trained_model():
             )
         return model
 
-    model = get_model_2()
+    model = get_model()
 
-    callback = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', patience=20, restore_best_weights=True, mode="max")
+    callback = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', patience=8, restore_best_weights=True, mode="max")
 
-    hist = model.fit(train_ds, validation_data=val_ds, epochs=200, callbacks=[callback])
+    hist = model.fit(train_ds, validation_data=val_ds, epochs=100, callbacks=[callback])
     model.summary()
 
     t = str(int(time.time()) % 1000000000)

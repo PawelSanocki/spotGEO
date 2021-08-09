@@ -36,11 +36,11 @@ def filter_image(img):
     # img = template_matching_filter(img, num_matches=20, matching_method=1, conclusion_method='median')
 #########################
     new_image = np.zeros_like(img)
-    amount = 200
+    amount = 500
     flat = img.flatten()
     ind = np.argpartition(flat, -amount)[-amount:]
 
-    th = flat[ind].min() - 1
+    th = flat[ind].min() - 0
     new_image[img > th] = 255
     img[img <= th] = 0
 
@@ -134,12 +134,12 @@ if __name__ == "__main__":
         y += WINDOW_SIZE//2
         to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
         return to_pred, tup
-    model_time = "626107288_884"
+    model_time = "628130022_768"
     # model_time = "626144688_942"
     model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
     model.compile()
-    for i in range(1,2): # which sequences
-        for j in range(1,2): # which frames
+    for i in range(1,20): # which sequences
+        for j in range(1,6): # which frames
             object_coords = get_objects_coords(i, j)
             # f, axarr = plt.subplots(1,3)
             path = Path(join(Path(__file__).parent.absolute(),"train"))
@@ -159,7 +159,9 @@ if __name__ == "__main__":
             cv2.resizeWindow("filtered",640,480)
             cv2.imshow("filtered", img)
             show_marked_image(img, object_coords, "marked_filtered")
-            cv2.waitKey()
+            # cv2.waitKey()
+
+            img = img / 255.0
             to_pred = []
             coords = []
             for x, y in product(range(img.shape[0]),range(img.shape[1])):
@@ -167,11 +169,10 @@ if __name__ == "__main__":
                     window, coord = get_window(img, x, y, 0)
                     to_pred.append(window)
                     coords.append(coord)
-            img = img / 255.0
             if len(to_pred) > 0:
                 p = model.predict(np.array(to_pred))
-                for i, coord in enumerate(coords):
-                    img[coord[1], coord[2]] = p[i][0]
+                for it, coord in enumerate(coords):
+                    img[coord[1], coord[2]] = p[it][0]
             img *= 255.
             img = img.astype(np.uint8)
             cv2.namedWindow("predicted",cv2.WINDOW_NORMAL)
@@ -180,8 +181,22 @@ if __name__ == "__main__":
             show_marked_image(img, object_coords, "marked_predicted")
             # axarr[2].imshow(img)
             # axarr[2].set_title("Classifier")
+
+            original_imgs = []
+            for it in range(5):
+                img = cv2.imread(join(path, str(i), str(it+1)) +
+                                '.png', cv2.IMREAD_GRAYSCALE)
+                original_imgs.append(img)
+            original_imgs = np.stack(original_imgs)
+
+            imgs, model = filter_NN(original_imgs, model)
+            cv2.namedWindow("predicted2",cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("predicted2",640,480)
+            cv2.imshow("predicted2", imgs[j-1]*255.)
+
             plt.show()
-            cv2.waitKey()
+            cv2.waitKey(5000)
             cv2.destroyAllWindows()
+            exit()
 
 
