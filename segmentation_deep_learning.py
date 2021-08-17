@@ -6,8 +6,10 @@ import json
 import cv2
 import random
 
-
 class GridSegmentatingModel(tf.keras.Model):
+    '''
+    Class representing the model, used in SDL method
+    '''
     def __init__(self, downsampling = 4, name="GridSegmentatingModel", **kwargs):
         super(GridSegmentatingModel, self).__init__(name=name, **kwargs)
 
@@ -51,6 +53,9 @@ class GridSegmentatingModel(tf.keras.Model):
 
 
 class Data_generator(tf.keras.utils.Sequence):
+    '''
+    Class generating the training and evaluation data for SDL method
+    '''
     def __init__(self, downsampling=4, batch_size = 1, shuffle=True, val=False, cv = 10, current_fold = 0):
         with open("train_anno.json", 'r') as f:
             self.annotations = json.load(f)[100 * 5:]
@@ -91,6 +96,9 @@ class Data_generator(tf.keras.utils.Sequence):
             random.shuffle(self.annotations)
 
 def F1_metric(y_true, y_pred):
+    '''
+    model for calculating the F1 metric for the model after an epoch
+    '''
     smoothing = 0.01
     intersection = tf.keras.backend.sum(y_true * y_pred, axis=[1,2,3])
     union = tf.keras.backend.sum(y_true, axis=[1,2,3]) + tf.keras.backend.sum(y_pred, axis=[1,2,3])
@@ -98,6 +106,14 @@ def F1_metric(y_true, y_pred):
     return dice
 
 def train_model(batch_size = 2, cv = 5, kfold = False, epochs=10, model_number = None):
+    '''
+    Function for creating and training the model
+    batch_size - batch size used for training
+    kfold - boolean, if k-fold cross-validation should be used
+    cv - number of folds, onlu if kfold is True
+    epochs - number of epochs
+    model_number - if specified the model with given number will be a strating point for training procedure
+    '''
     if kfold:
       best_score = 0
       for i in range(cv):
@@ -149,6 +165,10 @@ def train_model(batch_size = 2, cv = 5, kfold = False, epochs=10, model_number =
 
 
 def filter(imgs, model=None, model_number = None):
+    '''
+    Method filtering the stack of images using SDL method. If neighter model nor model_number is not specified the used model's number would be: 626084041_462.
+    imgs - images to be biltered stacked
+    '''
     if model is None:
         if model_number is None:
             model = tf.keras.models.load_model(

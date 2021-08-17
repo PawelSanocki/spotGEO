@@ -15,12 +15,17 @@ from itertools import product
 import matplotlib.pyplot as plt
 from model import settings
 from filter_NN import filter_NN
-from grid_division_filter import filter as gdf_filter
+from segmentation_deep_learning import filter as gdf_filter
 
 ST = 0.5 # satellite threshold
 NEIGHBOUR_SIZE = 10
 
-def remove_neighbourhood(mask, y, x):
+def remove_neighbourhood(mask : np.ndarray, y : int, x : int) -> np.ndarray:
+    '''
+    Method introduced not to allow marking single true satellite, by several predictions
+    x, y - the coordinates of prediction
+    mask - matrix of predictions
+    '''
     flag = False
     for i in range(-NEIGHBOUR_SIZE, NEIGHBOUR_SIZE+1):
         for j in range(-NEIGHBOUR_SIZE, NEIGHBOUR_SIZE+1):
@@ -35,7 +40,10 @@ def remove_neighbourhood(mask, y, x):
                     mask[y + i, x + j] = 0
     return mask
 
-def evaluate_image(mask, anno):
+def evaluate_image(mask : np.ndarray, anno : dict) -> tuple:
+    '''
+    Method for calculating number of TP, TN, FP, FN for predition matrix
+    '''
     TP, TN, FP, FN = 0,0,0,0
     coords = anno["object_coords"]
     for coord in coords:
@@ -48,25 +56,29 @@ def evaluate_image(mask, anno):
     TN = mask.size - TP - FN - FP
     return TP, TN, FP, FN
     
-def print_images(original_imgs, imgs, columns = 5):
-        fig=plt.figure(figsize=(14, 8))
-        rows = 2
-        iter = 1
-        for img in original_imgs[:columns]:
-            fig.add_subplot(rows, columns, iter)
-            plt.imshow(img)
-            iter += 1
-        for img in imgs[:columns]:
-            fig.add_subplot(rows, columns, iter)
-            plt.imshow(img)
-            iter += 1
-        plt.show()
+# def print_images(original_imgs, imgs, columns = 5):
+#         fig=plt.figure(figsize=(14, 8))
+#         rows = 2
+#         iter = 1
+#         for img in original_imgs[:columns]:
+#             fig.add_subplot(rows, columns, iter)
+#             plt.imshow(img)
+#             iter += 1
+#         for img in imgs[:columns]:
+#             fig.add_subplot(rows, columns, iter)
+#             plt.imshow(img)
+#             iter += 1
+#         plt.show()
 
 def evaluate(model = None):
-    # if model is None:
-    #     model_time = "625143927_940"
-    #     model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
-    #     model.compile()
+    '''
+    Method for fileter evaluation before trajevtories creation step.
+    If no model is specified it will use the default one with time of creation: 625143927_940
+    '''
+    if model is None:
+        model_time = "625143927_940"
+        model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
+        model.compile()
 
     with open("train_anno.json", 'r') as f:
         annotations = json.load(f)

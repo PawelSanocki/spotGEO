@@ -15,15 +15,17 @@ from itertools import product
 import matplotlib.pyplot as plt
 from model import settings
 from filter_NN import filter_NN
-from grid_division_filter import filter as gdf
-
+from segmentation_deep_learning import filter as gdf
 
 segmentation = True
-WINDOW_SIZE = settings.WINDOW_SIZE
 NUM_SEQUENCES = 100
-folder = "train"
+folder = "train" # "test"
+WINDOW_SIZE = settings.WINDOW_SIZE
 
 def print_images(original_imgs, imgs, columns=5):
+    '''
+    Printing of images for debugging purposes
+    '''
     fig = plt.figure(figsize=(14, 8))
     rows = 2
     iter = 1
@@ -41,6 +43,16 @@ def print_images(original_imgs, imgs, columns=5):
 def run(model=None, satellite_th=0.1, score_threshold=1.1,
                                        keep_only_best=True, trajectory_similarity=15, 
                                        margin = 5, directions_similarity=5, it = 0, GDF = True):
+    '''
+    Method running the whole pipeline and evaluating the solution.
+    satellite_th - satellite threshold for trajectories creation step
+    keep_only_best - boolean, determines if only bes direction of satellite movement should be kept
+    trajectory_similarity - TS used during trajectories erging step
+    directions_similarity - DS used during directions merging step
+    margin - margin used during trajectory score calculation
+    it - current iteration of experiments
+    GDF - boolen, if True SDL method will be used
+    '''
     path = join(Path(__file__).parent.absolute(), folder)
     results = []
     for seq in tqdm(range(NUM_SEQUENCES)):

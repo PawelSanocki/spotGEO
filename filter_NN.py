@@ -8,20 +8,23 @@ from model import settings
 WINDOW_SIZE = settings.WINDOW_SIZE
 
 def get_window(img, x, y, i):
-        image = np.pad(img, WINDOW_SIZE//2)
-        coord = (i, x, y)
-        x += WINDOW_SIZE//2
-        y += WINDOW_SIZE//2
-        to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
-        return to_pred, coord
+    '''
+    Extracting window from the image to be fed to the classifier
+    x, y, i - coordinates of the window
+    img - the image to be filtered
+    '''
+    image = np.pad(img, WINDOW_SIZE//2)
+    coord = (i, x, y)
+    x += WINDOW_SIZE//2
+    y += WINDOW_SIZE//2
+    to_pred = image[x-WINDOW_SIZE//2:x+WINDOW_SIZE//2+1,y-WINDOW_SIZE//2:y+WINDOW_SIZE//2+1].reshape((WINDOW_SIZE,WINDOW_SIZE,1))
+    return to_pred, coord
 
 def filter_NN(imgs, model = None):
+    '''
+    Method for image filtering using R_CNN based approach
+    '''
     if model is None:
-        model_time = '626144688_942'
-        model_time = "626107288_884"
-        # model_time = '626256363_943'
-        # model_time = '625143927_940'
-        # model_time = '626984740_961'
         model_time = "628130022_768"
         model = tf.keras.models.load_model('model\models\model' + str(model_time), compile=False)
         model.compile()

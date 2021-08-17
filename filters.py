@@ -24,6 +24,9 @@ I = INNER
 C = CENTER
 
 def filter_image(img):
+    '''
+    Method for initial image filtering step in R-CNN based approach
+    '''
     max_blur_img = np.array(myFilters.max_blur(img,13,9))
     img = img.astype(np.int)
     max_blur_img = max_blur_img.astype(np.int)
@@ -48,6 +51,9 @@ def filter_image(img):
     return new_image
 
 def get_filter(C,I,N=0,O=0,K=0):
+    '''
+    Creating kernel for convolutional filter approach with radial kernel
+    '''
     kernel = np.array([[K,K,K,K,K,K,K,K,K],
                        [K,O,O,O,O,O,O,O,K],
                        [K,O,N,N,N,N,N,O,K],
@@ -61,12 +67,18 @@ def get_filter(C,I,N=0,O=0,K=0):
 
 
 def gkern(size=5, nsig=3):
+    '''
+    Gaussian kernel generation
+    '''
     x = np.linspace(-nsig, nsig, size+1)
     kern1d = np.diff(st.norm.cdf(x))
     kern2d = np.outer(kern1d, kern1d)
     return kern2d/kern2d.sum()
 
 def template_matching_filter(img, num_matches = 10, matching_method = 0, conclusion_method = 'max'):
+    '''
+    Function for filtering the image using template matching
+    '''
     methods = [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
             cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
     results = []
@@ -101,9 +113,11 @@ def template_matching_filter(img, num_matches = 10, matching_method = 0, conclus
     results = np.pad(results, template.shape[0]//2)
     return results
 
-def get_objects_coords(sequence, frame):
+def get_objects_coords(sequence: int, frame: int):
+    '''
+    Function for extracting object coordinates from annotations, for given frame and sequence
+    '''
     train_anno_path = "train_anno.json"
-
     with open(train_anno_path, 'r') as f:
         anno = json.load(f)
     anno = anno[(sequence - 1) * 5 + frame - 1] # starts from 0
@@ -111,6 +125,9 @@ def get_objects_coords(sequence, frame):
     return object_coords.astype(np.int)
 
 def show_marked_image(img, object_coords, name):
+    '''
+    Printing annotated images
+    '''
     marked_img = cv2.cvtColor(img.copy(), cv2.COLOR_GRAY2BGR)
     for coords in object_coords:
         # print(coords)
